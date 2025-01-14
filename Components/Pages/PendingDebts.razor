@@ -2,53 +2,100 @@
 @inject BudgetFlow.Services.DebtHistoryService DebtHistoryService
 @inherits AuthenticatedPageBase
 
-<div class="pending-debts-container">
-    <h2>Pending Debts</h2>
-
-    <div class="search-and-filters">
-        <input type="text" @bind="searchTerm" @bind:event="oninput" class="search-input" placeholder="Search debts..." />
-        <select @bind="selectedTag" class="filter-dropdown">
-            <option value="All">All Tags</option>
-            @foreach (var tag in Tags)
-            {
-                <option value="@tag">@tag</option>
-            }
-        </select>
+@if (!IsAuthenticated)
+{
+    <div class="unauthorized-container">
+        <h2>Please Login First</h2>
+        <p>You need to log in to access this page.</p>
+        <a href="/login" class="login-link">Go to Login</a>
     </div>
+}
+else
+{
+    <div class="pending-debts-container">
+        <h2>Pending Debts</h2>
 
-    <div class="debts-summary">
-        <p>Total Debts: <strong>@TotalDebts</strong></p>
-        <p>Total Amount: <strong>$@TotalAmount</strong></p>
-    </div>
+        <div class="search-and-filters">
+            <input type="text" @bind="searchTerm" @bind:event="oninput" class="search-input" placeholder="Search debts..." />
+            <select @bind="selectedTag" class="filter-dropdown">
+                <option value="All">All Tags</option>
+                @foreach (var tag in Tags)
+                {
+                    <option value="@tag">@tag</option>
+                }
+            </select>
+        </div>
 
-    <table class="debts-table">
-        <thead>
-            <tr>
-                <th>Title</th>
-                <th>Tag</th>
-                <th>Source</th>
-                <th>Amount</th>
-                <th>Due Date</th>
-                <th>Notes</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var debt in FilteredDebts)
-            {
+        <div class="debts-summary">
+            <p>Total Debts: <strong>@TotalDebts</strong></p>
+            <p>Total Amount: <strong>$@TotalAmount</strong></p>
+        </div>
+
+        <table class="debts-table">
+            <thead>
                 <tr>
-                    <td>@debt.Title</td>
-                    <td>@debt.Tag</td>
-                    <td>@debt.Source</td>
-                    <td>$@debt.Amount</td>
-                    <td>@(debt.DueDate.HasValue ? debt.DueDate.Value.ToShortDateString() : "N/A")</td>
-                    <td>@debt.Notes</td>
+                    <th>Title</th>
+                    <th>Tag</th>
+                    <th>Source</th>
+                    <th>Amount</th>
+                    <th>Due Date</th>
+                    <th>Notes</th>
                 </tr>
-            }
-        </tbody>
-    </table>
-</div>
+            </thead>
+            <tbody>
+                @foreach (var debt in FilteredDebts)
+                {
+                    <tr>
+                        <td>@debt.Title</td>
+                        <td>@debt.Tag</td>
+                        <td>@debt.Source</td>
+                        <td>$@debt.Amount</td>
+                        <td>@(debt.DueDate.HasValue ? debt.DueDate.Value.ToShortDateString() : "N/A")</td>
+                        <td>@debt.Notes</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
 
 <style>
+    .unauthorized-container {
+        max-width: 500px;
+        margin: 50px auto;
+        text-align: center;
+        padding: 20px;
+        background: #fff3cd;
+        border: 1px solid #ffeeba;
+        border-radius: 8px;
+        font-family: Arial, sans-serif;
+    }
+
+        .unauthorized-container h2 {
+            font-size: 24px;
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .unauthorized-container p {
+            font-size: 16px;
+            color: #856404;
+            margin-bottom: 20px;
+        }
+
+    .login-link {
+        display: inline-block;
+        padding: 10px 20px;
+        background: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+    }
+
+        .login-link:hover {
+            background: #0056b3;
+        }
+
     .pending-debts-container {
         max-width: 800px;
         margin: 20px auto;
@@ -126,8 +173,11 @@
 
     protected override async Task OnInitializedAsync()
     {
-        Tags = await DebtHistoryService.GetDistinctTagsAsync();
-        await UpdateFilteredDebts();
+        if (IsAuthenticated)
+        {
+            Tags = await DebtHistoryService.GetDistinctTagsAsync();
+            await UpdateFilteredDebts();
+        }
     }
 
     private async Task UpdateFilteredDebts()

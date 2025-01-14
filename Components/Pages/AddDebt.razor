@@ -2,50 +2,97 @@
 @inject BudgetFlow.Services.AddDebtService DebtService
 @inherits AuthenticatedPageBase
 
-<div class="debt-container">
-    <h3 class="title">Add a Debt</h3>
-    <EditForm Model="debt" OnValidSubmit="HandleSaveAsync" class="form-container">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
-        <div class="form-group">
-            <label>Title</label>
-            <InputText @bind-Value="debt.Title" class="form-control" placeholder="Enter a Title." />
-        </div>
-        <div class="form-group">
-            <label>Tag</label>
-            <InputSelect @bind-Value="debt.Tag" class="form-control">
-                <option value="">-- Type or Select a Tag --</option>
-                <option value="Loan">Loan</option>
-                <option value="Mortgage">Mortgage</option>
-                <option value="Credit Card">Credit Card</option>
-            </InputSelect>
-        </div>
-        <div class="form-group">
-            <label>Source</label>
-            <InputText @bind-Value="debt.Source" class="form-control" placeholder="Enter Source." />
-        </div>
-        <div class="form-group">
-            <label>Amount</label>
-            <InputNumber @bind-Value="debt.Amount" class="form-control" placeholder="Enter an Amount." />
-        </div>
-        <div class="form-group">
-            <label>Due Date</label>
-            <InputDate @bind-Value="debt.DueDate" class="form-control" />
-        </div>
-        <div class="form-group">
-            <label>Notes (Optional)</label>
-            <InputTextArea @bind-Value="debt.Notes" class="form-control" placeholder="Enter a note." />
-        </div>
-        <button type="submit" class="btn-save">Save</button>
-    </EditForm>
-</div>
-
-@if (!string.IsNullOrEmpty(successMessage))
+@if (!IsAuthenticated)
 {
-    <p class="success-message">@successMessage</p>
+    <div class="unauthorized-container">
+        <h2>Please Login First</h2>
+        <p>You need to log in to access this page.</p>
+        <a href="/login" class="login-link">Go to Login</a>
+    </div>
+}
+else
+{
+    <div class="debt-container">
+        <h3 class="title">Add a Debt</h3>
+        <EditForm Model="debt" OnValidSubmit="HandleSaveAsync" class="form-container">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="form-group">
+                <label>Title</label>
+                <InputText @bind-Value="debt.Title" class="form-control" placeholder="Enter a Title." />
+            </div>
+            <div class="form-group">
+                <label>Tag</label>
+                <InputSelect @bind-Value="debt.Tag" class="form-control">
+                    <option value="">-- Type or Select a Tag --</option>
+                    <option value="Loan">Loan</option>
+                    <option value="Mortgage">Mortgage</option>
+                    <option value="Credit Card">Credit Card</option>
+                </InputSelect>
+            </div>
+            <div class="form-group">
+                <label>Source</label>
+                <InputText @bind-Value="debt.Source" class="form-control" placeholder="Enter Source." />
+            </div>
+            <div class="form-group">
+                <label>Amount</label>
+                <InputNumber @bind-Value="debt.Amount" class="form-control" placeholder="Enter an Amount." />
+            </div>
+            <div class="form-group">
+                <label>Due Date</label>
+                <InputDate @bind-Value="debt.DueDate" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label>Notes (Optional)</label>
+                <InputTextArea @bind-Value="debt.Notes" class="form-control" placeholder="Enter a note." />
+            </div>
+            <button type="submit" class="btn-save">Save</button>
+        </EditForm>
+    </div>
+
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <p class="success-message">@successMessage</p>
+    }
 }
 
 <style>
+    .unauthorized-container {
+        max-width: 500px;
+        margin: 50px auto;
+        text-align: center;
+        padding: 20px;
+        background: #fff3cd;
+        border: 1px solid #ffeeba;
+        border-radius: 8px;
+        font-family: Arial, sans-serif;
+    }
+
+        .unauthorized-container h2 {
+            font-size: 24px;
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .unauthorized-container p {
+            font-size: 16px;
+            color: #856404;
+            margin-bottom: 20px;
+        }
+
+    .login-link {
+        display: inline-block;
+        padding: 10px 20px;
+        background: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+    }
+
+        .login-link:hover {
+            background: #0056b3;
+        }
+
     .debt-container {
         max-width: 500px;
         margin: 50px auto;

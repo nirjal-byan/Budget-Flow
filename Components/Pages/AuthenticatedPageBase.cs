@@ -11,14 +11,25 @@ namespace BudgetFlow.Components.Pages
         [Inject]
         protected NavigationManager NavigationManager { get; set; } = default!;
 
+        protected bool IsAuthenticated => AuthService.IsAuthenticated;
+        protected string CurrentUserId => AuthService.CurrentUser?.Id ?? string.Empty;
+        protected bool ShowRedirectMessage { get; private set; }
+
         protected override void OnInitialized()
         {
-            if (!AuthService.IsAuthenticated)
+            if (!IsAuthenticated)
             {
-                NavigationManager.NavigateTo("/login", true);
+                ShowRedirectMessage = true;
             }
         }
 
-        protected string CurrentUserId => AuthService.CurrentUser?.Id ?? string.Empty;
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            if (ShowRedirectMessage)
+            {
+                await Task.Delay(2000); // Delay for 2 seconds to show the message
+                NavigationManager.NavigateTo("/login", true);
+            }
+        }
     }
 }
