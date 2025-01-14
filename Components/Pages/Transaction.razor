@@ -27,11 +27,24 @@
         <div class="form-group">
             <label>Tag</label>
             <InputSelect @bind-Value="transaction.Tag" class="form-control">
-                <option value="">-- Type or Select a Tag --</option>
-                <option value="Food">Food</option>
-                <option value="Transport">Transport</option>
-                <option value="Entertainment">Entertainment</option>
+                <option value="">-- Select a Tag --</option>
+                @foreach (var tag in tagOptions)
+                {
+                    <option value="@tag">@tag</option>
+                }
             </InputSelect>
+        </div>
+
+        <div class="form-group">
+            <label>Add Custom Tag</label>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <InputText @bind-Value="newTag" class="form-control" placeholder="Enter a custom tag" />
+                <button type="button" class="btn-save btn-add-tag" @onclick="AddCustomTag">Add</button>
+            </div>
+            @if (!string.IsNullOrEmpty(tagErrorMessage))
+            {
+                <p class="error-message">@tagErrorMessage</p>
+            }
         </div>
 
         <div class="form-group">
@@ -149,6 +162,12 @@
             background-color: #555;
         }
 
+    .error-message {
+        color: red;
+        font-size: 14px;
+        margin-top: 5px;
+    }
+
     .success-message {
         text-align: center;
         color: green;
@@ -160,6 +179,17 @@
 @code {
     private BudgetFlow.Models.Transaction transaction = new();
     private string successMessage;
+    private string newTag;
+    private string tagErrorMessage;
+    private List<string> tagOptions = new List<string>
+    {
+        "Food",
+        "Transport",
+        "Entertainment",
+        "Clothes",
+        "Gadgets",
+        "Miscellaneous"
+    };
 
     private async Task HandleSaveAsync()
     {
@@ -183,5 +213,25 @@
         {
             successMessage = $"Error adding transaction: {ex.Message}";
         }
+    }
+
+    private void AddCustomTag()
+    {
+        tagErrorMessage = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(newTag))
+        {
+            tagErrorMessage = "Custom tag cannot be empty.";
+            return;
+        }
+
+        if (tagOptions.Contains(newTag))
+        {
+            tagErrorMessage = "This tag already exists.";
+            return;
+        }
+
+        tagOptions.Add(newTag);
+        newTag = string.Empty; // Clear the input field
     }
 }

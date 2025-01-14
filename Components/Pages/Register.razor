@@ -20,7 +20,11 @@
 
         <div class="form-group">
             <label>Currency:</label>
-            <InputText @bind-Value="registerModel.Currency" class="form-control" />
+            <InputSelect @bind-Value="registerModel.Currency" class="form-control">
+                <option value="">Select Currency</option>
+                <option value="USD">USD - US Dollar</option>
+                <option value="NPR">NPR - Nepalese Rupee</option>
+            </InputSelect>
         </div>
 
         <button type="submit" class="btn-submit">Register</button>
@@ -121,6 +125,12 @@
     {
         try
         {
+            if (string.IsNullOrEmpty(registerModel.Currency))
+            {
+                errorMessage = "Please select a currency.";
+                return;
+            }
+
             var (success, message) = await AuthService.RegisterAsync(
                 registerModel.Username,
                 registerModel.Password,
