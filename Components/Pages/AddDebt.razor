@@ -1,49 +1,60 @@
 @page "/debt"
 @inject BudgetFlow.Services.AddDebtService DebtService
-@inherits AuthenticatedPageBase
+@inject BudgetFlow.Services.AuthenticationService AuthService
 
 <div class="debt-container">
-    <h3 class="title">Add a Debt</h3>
-    <EditForm Model="debt" OnValidSubmit="HandleSaveAsync" class="form-container">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
-        <div class="form-group">
-            <label>Title</label>
-            <InputText @bind-Value="debt.Title" class="form-control" placeholder="Enter a Title." />
+    @if (!AuthService.IsAuthenticated)
+    {
+        <div class="login-message">
+            <h2>Please Login First</h2>
+            <p>You need to be logged in to add debts.</p>
+            <a href="login" class="login-link">Go to Login Page</a>
         </div>
-        <div class="form-group">
-            <label>Tag</label>
-            <InputSelect @bind-Value="debt.Tag" class="form-control">
-                <option value="">-- Type or Select a Tag --</option>
-                <option value="Loan">Loan</option>
-                <option value="Mortgage">Mortgage</option>
-                <option value="Credit Card">Credit Card</option>
-            </InputSelect>
-        </div>
-        <div class="form-group">
-            <label>Source</label>
-            <InputText @bind-Value="debt.Source" class="form-control" placeholder="Enter Source." />
-        </div>
-        <div class="form-group">
-            <label>Amount</label>
-            <InputNumber @bind-Value="debt.Amount" class="form-control" placeholder="Enter an Amount." />
-        </div>
-        <div class="form-group">
-            <label>Due Date</label>
-            <InputDate @bind-Value="debt.DueDate" class="form-control" />
-        </div>
-        <div class="form-group">
-            <label>Notes (Optional)</label>
-            <InputTextArea @bind-Value="debt.Notes" class="form-control" placeholder="Enter a note." />
-        </div>
-        <button type="submit" class="btn-save">Save</button>
-    </EditForm>
-</div>
+    }
+    else
+    {
+        <h3 class="title">Add a Debt</h3>
+        <EditForm Model="debt" OnValidSubmit="HandleSaveAsync" class="form-container">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="form-group">
+                <label>Title</label>
+                <InputText @bind-Value="debt.Title" class="form-control" placeholder="Enter a Title." />
+            </div>
+            <div class="form-group">
+                <label>Tag</label>
+                <InputSelect @bind-Value="debt.Tag" class="form-control">
+                    <option value="">-- Type or Select a Tag --</option>
+                    <option value="Loan">Loan</option>
+                    <option value="Mortgage">Mortgage</option>
+                    <option value="Credit Card">Credit Card</option>
+                </InputSelect>
+            </div>
+            <div class="form-group">
+                <label>Source</label>
+                <InputText @bind-Value="debt.Source" class="form-control" placeholder="Enter Source." />
+            </div>
+            <div class="form-group">
+                <label>Amount</label>
+                <InputNumber @bind-Value="debt.Amount" class="form-control" placeholder="Enter an Amount." />
+            </div>
+            <div class="form-group">
+                <label>Due Date</label>
+                <InputDate @bind-Value="debt.DueDate" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label>Notes (Optional)</label>
+                <InputTextArea @bind-Value="debt.Notes" class="form-control" placeholder="Enter a note." />
+            </div>
+            <button type="submit" class="btn-save">Save</button>
+        </EditForm>
 
-@if (!string.IsNullOrEmpty(successMessage))
-{
-    <p class="success-message">@successMessage</p>
-}
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <p class="success-message">@successMessage</p>
+        }
+    }
+</div>
 
 <style>
     .debt-container {
@@ -114,6 +125,32 @@
         font-size: 16px;
         margin-top: 10px;
     }
+
+    .login-message {
+        text-align: center;
+        padding: 40px 20px;
+    }
+
+        .login-message p {
+            margin: 20px 0;
+            color: #666;
+            font-size: 16px;
+        }
+
+    .login-link {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #333;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        font-size: 16px;
+        transition: background-color 0.3s;
+    }
+
+        .login-link:hover {
+            background-color: #555;
+        }
 </style>
 
 @code {
@@ -124,6 +161,12 @@
     {
         try
         {
+            if (!AuthService.IsAuthenticated)
+            {
+                successMessage = "You must be logged in to add debts.";
+                return;
+            }
+
             await DebtService.AddDebtAsync(debt);
             successMessage = $"Debt '{debt.Title}' added successfully!";
             debt = new BudgetFlow.Models.Debt();

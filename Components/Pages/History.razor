@@ -1,57 +1,74 @@
 @page "/history"
 @inject BudgetFlow.Services.TransactionHistoryService HistoryService
-@inherits AuthenticatedPageBase
+@inject BudgetFlow.Services.AuthenticationService AuthService
 
 <div class="transaction-history-container">
-    <h2>Transaction History</h2>
-    <div class="search-and-filters">
-        <input type="text" @bind="searchTerm" @bind:after="UpdateFilteredTransactionsAsync" class="search-input" placeholder="Search in table..." />
-        <select @bind="selectedType" @bind:after="UpdateFilteredTransactionsAsync" class="filter-dropdown">
-            <option value="All">All Types</option>
-            <option value="Debit">Debit</option>
-            <option value="Credit">Credit</option>
-        </select>
-        <select @bind="selectedTag" @bind:after="UpdateFilteredTransactionsAsync" class="filter-dropdown">
-            <option value="All">All Tags</option>
-            @foreach (var tag in tags)
-            {
-                <option value="@tag">@tag</option>
-            }
-        </select>
-    </div>
+    @if (!AuthService.IsAuthenticated)
+    {
+        <div class="login-message">
+            <h2>Please Login First</h2>
+            <p>You need to be logged in to view transaction history.</p>
+            <a href="login" class="login-link">Go to Login Page</a>
+        </div>
+    }
+    else
+    {
+        <h2>Transaction History</h2>
 
-    <div class="transaction-summary">
-        <p>Total Transactions: <strong>@filteredTransactions.Count</strong></p>
-        <p>Total Amount: <strong>$@filteredTransactions.Sum(t => t.Amount)</strong></p>
-    </div>
+        <!-- Search, Filters, and Date Inputs -->
+        <div class="search-and-filters">
+            <input type="text" @bind="searchTerm" @bind:after="UpdateFilteredTransactionsAsync" class="search-input" placeholder="Search in table..." />
+            <select @bind="selectedType" @bind:after="UpdateFilteredTransactionsAsync" class="filter-dropdown">
+                <option value="All">All Types</option>
+                <option value="Debit">Debit</option>
+                <option value="Credit">Credit</option>
+            </select>
+            <select @bind="selectedTag" @bind:after="UpdateFilteredTransactionsAsync" class="filter-dropdown">
+                <option value="All">All Tags</option>
+                @foreach (var tag in tags)
+                {
+                    <option value="@tag">@tag</option>
+                }
+            </select>
+            <InputDate @bind-Value="startDate" @bind-Value:after="UpdateFilteredTransactionsAsync" class="compact-date-input" placeholder="Start Date" />
+            <InputDate @bind-Value="endDate" @bind-Value:after="UpdateFilteredTransactionsAsync" class="compact-date-input" placeholder="End Date" />
+        </div>
 
-    <table class="transaction-table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Type</th>
-                <th>Amount Spent</th>
-                <th>Title</th>
-                <th>Tags</th>
-                <th>Date</th>
-                <th>Notes</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var transaction in filteredTransactions)
-            {
+        <!-- Summary -->
+        <div class="transaction-summary">
+            <p>Total Transactions: <strong>@filteredTransactions.Count</strong></p>
+            <p>Total Amount: <strong>$@filteredTransactions.Sum(t => t.Amount)</strong></p>
+        </div>
+
+        <!-- Table -->
+        <table class="transaction-table">
+            <thead>
                 <tr>
-                    <td>@transaction.Id</td>
-                    <td>@transaction.Type</td>
-                    <td>$@transaction.Amount</td>
-                    <td>@transaction.Title</td>
-                    <td>@transaction.Tag</td>
-                    <td>@(transaction.Date.HasValue ? transaction.Date.Value.ToShortDateString() : "N/A")</td>
-                    <td>@transaction.Notes</td>
+                    <th>ID</th>
+                    <th>Type</th>
+                    <th>Amount Spent</th>
+                    <th>Title</th>
+                    <th>Tags</th>
+                    <th>Date</th>
+                    <th>Notes</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var transaction in filteredTransactions)
+                {
+                    <tr>
+                        <td>@transaction.Id</td>
+                        <td>@transaction.Type</td>
+                        <td>$@transaction.Amount</td>
+                        <td>@transaction.Title</td>
+                        <td>@transaction.Tag</td>
+                        <td>@(transaction.Date.HasValue ? transaction.Date.Value.ToShortDateString() : "N/A")</td>
+                        <td>@transaction.Notes</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
 </div>
 
 <style>
@@ -72,26 +89,56 @@
         font-weight: bold;
     }
 
+    .login-message {
+        text-align: center;
+        padding: 40px 20px;
+    }
+
+    .login-message p {
+        margin: 20px 0;
+        color: #666;
+        font-size: 16px;
+    }
+
+    .login-link {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #333;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        font-size: 16px;
+        transition: background-color 0.3s;
+    }
+
+    .login-link:hover {
+        background-color: #555;
+    }
+
     .search-and-filters {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 20px;
+        gap: 10px;
+        flex-wrap: wrap;
     }
 
-    .search-input, .filter-dropdown {
-        padding: 10px;
+    .search-input, .filter-dropdown, .compact-date-input {
+        padding: 8px;
         border: 1px solid #ddd;
         border-radius: 5px;
         font-size: 14px;
     }
 
     .search-input {
-        width: 50%;
+        flex: 2;
+        min-width: 200px;
     }
 
-    .filter-dropdown {
-        width: 20%;
+    .filter-dropdown, .compact-date-input {
+        flex: 1;
+        min-width: 120px;
     }
 
     .transaction-summary {
@@ -105,33 +152,38 @@
         font-size: 14px;
     }
 
-        .transaction-table th, .transaction-table td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: center;
-        }
+    .transaction-table th, .transaction-table td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: center;
+    }
 
-        .transaction-table th {
-            background-color: #333;
-            color: #fff;
-        }
+    .transaction-table th {
+        background-color: #333;
+        color: #fff;
+    }
 
-        .transaction-table tbody tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
+    .transaction-table tbody tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
 </style>
 
 @code {
     private string searchTerm = string.Empty;
     private string selectedType = "All";
     private string selectedTag = "All";
+    private DateTime? startDate;
+    private DateTime? endDate;
     private List<string> tags = new List<string>();
     private List<BudgetFlow.Models.Transaction> filteredTransactions = new List<BudgetFlow.Models.Transaction>();
 
     protected override async Task OnInitializedAsync()
     {
-        await UpdateTagsAsync();
-        await UpdateFilteredTransactionsAsync();
+        if (AuthService.IsAuthenticated)
+        {
+            await UpdateTagsAsync();
+            await UpdateFilteredTransactionsAsync();
+        }
     }
 
     private async Task UpdateTagsAsync()
@@ -142,12 +194,10 @@
         }
         catch (UnauthorizedAccessException)
         {
-            // Handle unauthorized access
             tags = new List<string>();
         }
         catch (Exception)
         {
-            // Handle other errors
             tags = new List<string>();
         }
     }
@@ -157,15 +207,21 @@
         try
         {
             filteredTransactions = await HistoryService.GetFilteredTransactionsAsync(searchTerm, selectedType, selectedTag);
+
+            if (startDate.HasValue && endDate.HasValue)
+            {
+                filteredTransactions = filteredTransactions
+                    .Where(t => t.Date >= startDate && t.Date <= endDate)
+                    .OrderBy(t => t.Date)
+                    .ToList();
+            }
         }
         catch (UnauthorizedAccessException)
         {
-            // Handle unauthorized access
             filteredTransactions = new List<BudgetFlow.Models.Transaction>();
         }
         catch (Exception)
         {
-            // Handle other errors
             filteredTransactions = new List<BudgetFlow.Models.Transaction>();
         }
     }

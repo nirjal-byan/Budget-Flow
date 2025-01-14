@@ -1,75 +1,86 @@
 @page "/transactions"
 @inject BudgetFlow.Services.AddTransactionService TransactionService
-@inherits AuthenticatedPageBase
+@inject BudgetFlow.Services.AuthenticationService AuthService
 
 <div class="transaction-container">
-    <h3 class="title">Add a transaction</h3>
-    <div class="transaction-type">
-        <button class="btn-type @(transaction.Type == "Debit" ? "btn-debit active" : "btn-debit")"
-                @onclick='() => transaction.Type = "Debit"'>
-            Debit
-        </button>
-        <button class="btn-type @(transaction.Type == "Credit" ? "btn-credit active" : "btn-credit")"
-                @onclick='() => transaction.Type = "Credit"'>
-            Credit
-        </button>
-    </div>
-
-    <EditForm Model="transaction" OnValidSubmit="HandleSaveAsync" class="form-container">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
-
-        <div class="form-group">
-            <label>Title</label>
-            <InputText @bind-Value="transaction.Title" class="form-control" placeholder="Enter a Title." />
+    @if (!AuthService.IsAuthenticated)
+    {
+        <div class="login-message">
+            <h2>Please Login First</h2>
+            <p>You need to be logged in to add transactions.</p>
+            <a href="login" class="login-link">Go to Login Page</a>
+        </div>
+    }
+    else
+    {
+        <h3 class="title">Add a transaction</h3>
+        <div class="transaction-type">
+            <button class="btn-type @(transaction.Type == "Debit" ? "btn-debit active" : "btn-debit")"
+                    @onclick='() => transaction.Type = "Debit"'>
+                Debit
+            </button>
+            <button class="btn-type @(transaction.Type == "Credit" ? "btn-credit active" : "btn-credit")"
+                    @onclick='() => transaction.Type = "Credit"'>
+                Credit
+            </button>
         </div>
 
-        <div class="form-group">
-            <label>Tag</label>
-            <InputSelect @bind-Value="transaction.Tag" class="form-control">
-                <option value="">-- Select a Tag --</option>
-                @foreach (var tag in tagOptions)
-                {
-                    <option value="@tag">@tag</option>
-                }
-            </InputSelect>
-        </div>
+        <EditForm Model="transaction" OnValidSubmit="HandleSaveAsync" class="form-container">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
 
-        <div class="form-group">
-            <label>Add Custom Tag</label>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <InputText @bind-Value="newTag" class="form-control" placeholder="Enter a custom tag" />
-                <button type="button" class="btn-save btn-add-tag" @onclick="AddCustomTag">Add</button>
+            <div class="form-group">
+                <label>Title</label>
+                <InputText @bind-Value="transaction.Title" class="form-control" placeholder="Enter a Title." />
             </div>
-            @if (!string.IsNullOrEmpty(tagErrorMessage))
-            {
-                <p class="error-message">@tagErrorMessage</p>
-            }
-        </div>
 
-        <div class="form-group">
-            <label>Amount</label>
-            <InputNumber @bind-Value="transaction.Amount" class="form-control" placeholder="Enter an Amount." />
-        </div>
+            <div class="form-group">
+                <label>Tag</label>
+                <InputSelect @bind-Value="transaction.Tag" class="form-control">
+                    <option value="">-- Select a Tag --</option>
+                    @foreach (var tag in tagOptions)
+                    {
+                        <option value="@tag">@tag</option>
+                    }
+                </InputSelect>
+            </div>
 
-        <div class="form-group">
-            <label>Date</label>
-            <InputDate @bind-Value="transaction.Date" class="form-control" />
-        </div>
+            <div class="form-group">
+                <label>Add Custom Tag</label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <InputText @bind-Value="newTag" class="form-control" placeholder="Enter a custom tag" />
+                    <button type="button" class="btn-save btn-add-tag" @onclick="AddCustomTag">Add</button>
+                </div>
+                @if (!string.IsNullOrEmpty(tagErrorMessage))
+                {
+                    <p class="error-message">@tagErrorMessage</p>
+                }
+            </div>
 
-        <div class="form-group">
-            <label>Notes (Optional)</label>
-            <InputTextArea @bind-Value="transaction.Notes" class="form-control" placeholder="Enter a note." />
-        </div>
+            <div class="form-group">
+                <label>Amount</label>
+                <InputNumber @bind-Value="transaction.Amount" class="form-control" placeholder="Enter an Amount." />
+            </div>
 
-        <button type="submit" class="btn-save">Save</button>
-    </EditForm>
+            <div class="form-group">
+                <label>Date</label>
+                <InputDate @bind-Value="transaction.Date" class="form-control" />
+            </div>
+
+            <div class="form-group">
+                <label>Notes (Optional)</label>
+                <InputTextArea @bind-Value="transaction.Notes" class="form-control" placeholder="Enter a note." />
+            </div>
+
+            <button type="submit" class="btn-save">Save</button>
+        </EditForm>
+
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <p class="success-message">@successMessage</p>
+        }
+    }
 </div>
-
-@if (!string.IsNullOrEmpty(successMessage))
-{
-    <p class="success-message">@successMessage</p>
-}
 
 <style>
     .transaction-container {
@@ -81,6 +92,32 @@
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         font-family: Arial, sans-serif;
     }
+
+    .login-message {
+        text-align: center;
+        padding: 40px 20px;
+    }
+
+        .login-message p {
+            margin: 20px 0;
+            color: #666;
+            font-size: 16px;
+        }
+
+    .login-link {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #333;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        font-size: 16px;
+        transition: background-color 0.3s;
+    }
+
+        .login-link:hover {
+            background-color: #555;
+        }
 
     .title {
         text-align: center;
@@ -183,6 +220,12 @@
     private string tagErrorMessage;
     private List<string> tagOptions = new List<string>
     {
+        "Monthly",
+        "Yearly",
+		"Rent",
+        "Groceries",
+        "EMI",
+        "Fuel",
         "Food",
         "Transport",
         "Entertainment",
@@ -195,6 +238,12 @@
     {
         try
         {
+            if (!AuthService.IsAuthenticated)
+            {
+                successMessage = "You must be logged in to add transactions.";
+                return;
+            }
+
             if (string.IsNullOrEmpty(transaction.Type))
             {
                 successMessage = "Please select Debit or Credit before saving!";
@@ -203,7 +252,7 @@
 
             await TransactionService.AddTransactionAsync(transaction);
             successMessage = $"Transaction '{transaction.Title}' of type '{transaction.Type}' added successfully!";
-            transaction = new BudgetFlow.Models.Transaction(); // Reset the form
+            transaction = new BudgetFlow.Models.Transaction();
         }
         catch (UnauthorizedAccessException)
         {
@@ -232,6 +281,6 @@
         }
 
         tagOptions.Add(newTag);
-        newTag = string.Empty; // Clear the input field
+        newTag = string.Empty;
     }
 }

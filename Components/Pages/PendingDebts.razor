@@ -1,51 +1,59 @@
 @page "/pending-debts"
 @inject BudgetFlow.Services.DebtHistoryService DebtHistoryService
-@inherits AuthenticatedPageBase
+@inject BudgetFlow.Services.AuthenticationService AuthService
 
 <div class="pending-debts-container">
-    <h2>Pending Debts</h2>
-
-    <div class="search-and-filters">
-        <input type="text" @bind="searchTerm" @bind:event="oninput" class="search-input" placeholder="Search debts..." />
-        <select @bind="selectedTag" class="filter-dropdown">
-            <option value="All">All Tags</option>
-            @foreach (var tag in Tags)
-            {
-                <option value="@tag">@tag</option>
-            }
-        </select>
-    </div>
-
-    <div class="debts-summary">
-        <p>Total Debts: <strong>@TotalDebts</strong></p>
-        <p>Total Amount: <strong>$@TotalAmount</strong></p>
-    </div>
-
-    <table class="debts-table">
-        <thead>
-            <tr>
-                <th>Title</th>
-                <th>Tag</th>
-                <th>Source</th>
-                <th>Amount</th>
-                <th>Due Date</th>
-                <th>Notes</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var debt in FilteredDebts)
-            {
+    @if (!AuthService.IsAuthenticated)
+    {
+        <div class="login-message">
+            <h2>Please Login First</h2>
+            <p>You need to be logged in to view pending debts.</p>
+            <a href="login" class="login-link">Go to Login Page</a>
+        </div>
+    }
+    else
+    {
+        <h2>Pending Debts</h2>
+        <div class="search-and-filters">
+            <input type="text" @bind="searchTerm" @bind:event="oninput" class="search-input" placeholder="Search debts..." />
+            <select @bind="selectedTag" class="filter-dropdown">
+                <option value="All">All Tags</option>
+                @foreach (var tag in Tags)
+                {
+                    <option value="@tag">@tag</option>
+                }
+            </select>
+        </div>
+        <div class="debts-summary">
+            <p>Total Debts: <strong>@TotalDebts</strong></p>
+            <p>Total Amount: <strong>$@TotalAmount</strong></p>
+        </div>
+        <table class="debts-table">
+            <thead>
                 <tr>
-                    <td>@debt.Title</td>
-                    <td>@debt.Tag</td>
-                    <td>@debt.Source</td>
-                    <td>$@debt.Amount</td>
-                    <td>@(debt.DueDate.HasValue ? debt.DueDate.Value.ToShortDateString() : "N/A")</td>
-                    <td>@debt.Notes</td>
+                    <th>Title</th>
+                    <th>Tag</th>
+                    <th>Source</th>
+                    <th>Amount</th>
+                    <th>Due Date</th>
+                    <th>Notes</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var debt in FilteredDebts)
+                {
+                    <tr>
+                        <td>@debt.Title</td>
+                        <td>@debt.Tag</td>
+                        <td>@debt.Source</td>
+                        <td>$@debt.Amount</td>
+                        <td>@(debt.DueDate.HasValue ? debt.DueDate.Value.ToShortDateString() : "N/A")</td>
+                        <td>@debt.Notes</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
 </div>
 
 <style>
@@ -58,6 +66,32 @@
         border-radius: 8px;
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     }
+
+    .login-message {
+        text-align: center;
+        padding: 40px 20px;
+    }
+
+        .login-message p {
+            margin: 20px 0;
+            color: #666;
+            font-size: 16px;
+        }
+
+    .login-link {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #333;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        font-size: 16px;
+        transition: background-color 0.3s;
+    }
+
+        .login-link:hover {
+            background-color: #555;
+        }
 
     h2 {
         text-align: center;
@@ -120,18 +154,23 @@
     private string selectedTag = "All";
     private List<string> Tags = new();
     private List<BudgetFlow.Models.Debt> FilteredDebts = new();
-
     private int TotalDebts => FilteredDebts.Count;
     private decimal TotalAmount => FilteredDebts.Sum(d => d.Amount);
 
     protected override async Task OnInitializedAsync()
     {
-        Tags = await DebtHistoryService.GetDistinctTagsAsync();
-        await UpdateFilteredDebts();
+        if (AuthService.IsAuthenticated)
+        {
+            Tags = await DebtHistoryService.GetDistinctTagsAsync();
+            await UpdateFilteredDebts();
+        }
     }
 
     private async Task UpdateFilteredDebts()
     {
-        FilteredDebts = await DebtHistoryService.GetFilteredDebtsAsync(searchTerm, selectedTag);
+        if (AuthService.IsAuthenticated)
+        {
+            FilteredDebts = await DebtHistoryService.GetFilteredDebtsAsync(searchTerm, selectedTag);
+        }
     }
 }
