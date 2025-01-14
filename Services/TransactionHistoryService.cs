@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using BudgetFlow.Models;
-using BudgetFlow.Services;
 
 namespace BudgetFlow.Services
 {
@@ -16,18 +15,22 @@ namespace BudgetFlow.Services
             _transactionService = transactionService;
         }
 
-        // Get filtered transactions by search term, type, and tag
-        public async Task<List<Transaction>> GetFilteredTransactionsAsync(string searchTerm, string transactionType, string tag)
+        // Get filtered transactions by search term, type, tag, and date range
+        public async Task<List<Transaction>> GetFilteredTransactionsAsync(
+            string searchTerm, string transactionType, string tag, DateTime? startDate, DateTime? endDate)
         {
             var transactions = await _transactionService.GetUserTransactionsAsync();
 
             return transactions
-                .Where(t => (string.IsNullOrWhiteSpace(searchTerm) ||
-                            t.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                            t.Tag.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                            t.Type.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) &&
-                            (transactionType == "All" || t.Type.Equals(transactionType, StringComparison.OrdinalIgnoreCase)) &&
-                            (tag == "All" || t.Tag.Equals(tag, StringComparison.OrdinalIgnoreCase)))
+                .Where(t =>
+                    (string.IsNullOrWhiteSpace(searchTerm) ||
+                        t.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                        t.Tag.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                        t.Type.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) &&
+                    (transactionType == "All" || t.Type.Equals(transactionType, StringComparison.OrdinalIgnoreCase)) &&
+                    (tag == "All" || t.Tag.Equals(tag, StringComparison.OrdinalIgnoreCase)) &&
+                    (!startDate.HasValue || t.Date >= startDate) &&
+                    (!endDate.HasValue || t.Date <= endDate))
                 .ToList();
         }
 

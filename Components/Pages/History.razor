@@ -18,6 +18,8 @@
                 <option value="@tag">@tag</option>
             }
         </select>
+        <input type="date" @bind="startDate" @bind:after="UpdateFilteredTransactionsAsync" class="filter-dropdown" />
+        <input type="date" @bind="endDate" @bind:after="UpdateFilteredTransactionsAsync" class="filter-dropdown" />
     </div>
 
     <div class="transaction-summary">
@@ -125,6 +127,8 @@
     private string searchTerm = string.Empty;
     private string selectedType = "All";
     private string selectedTag = "All";
+    private DateTime? startDate = null;
+    private DateTime? endDate = null;
     private List<string> tags = new List<string>();
     private List<BudgetFlow.Models.Transaction> filteredTransactions = new List<BudgetFlow.Models.Transaction>();
 
@@ -142,12 +146,10 @@
         }
         catch (UnauthorizedAccessException)
         {
-            // Handle unauthorized access
             tags = new List<string>();
         }
         catch (Exception)
         {
-            // Handle other errors
             tags = new List<string>();
         }
     }
@@ -156,16 +158,15 @@
     {
         try
         {
-            filteredTransactions = await HistoryService.GetFilteredTransactionsAsync(searchTerm, selectedType, selectedTag);
+            filteredTransactions = await HistoryService.GetFilteredTransactionsAsync(
+                searchTerm, selectedType, selectedTag, startDate, endDate);
         }
         catch (UnauthorizedAccessException)
         {
-            // Handle unauthorized access
             filteredTransactions = new List<BudgetFlow.Models.Transaction>();
         }
         catch (Exception)
         {
-            // Handle other errors
             filteredTransactions = new List<BudgetFlow.Models.Transaction>();
         }
     }

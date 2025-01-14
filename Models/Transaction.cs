@@ -26,7 +26,7 @@ namespace BudgetFlow.Models
         public DateTime? Date { get; set; }
 
         [JsonPropertyName("notes")]
-        public string Notes { get; set; } = string.Empty;
+        public string Notes { get; set; } = string.Empty; //Optional
 
         [JsonPropertyName("createdAt")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
