@@ -1,0 +1,151 @@
+@page "/login"
+@inject NavigationManager Navigation
+@inject AuthenticationService AuthService
+
+<div class="login-container">
+    <h3>Login</h3>
+    <EditForm Model="credentials" OnValidSubmit="HandleLoginAsync">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <div class="form-group">
+            <label>Username:</label>
+            <InputText @bind-Value="credentials.Username" class="form-control" />
+        </div>
+        <div class="form-group">
+            <label>Password:</label>
+            <InputText @bind-Value="credentials.Password" type="password" class="form-control" />
+        </div>
+        <button type="submit" class="btn-submit">Login</button>
+        <button type="button" class="btn-secondary" @onclick="NavigateToRegister">Go to Register</button>
+    </EditForm>
+    @if (errorMessage != null)
+    {
+            <p class="error-message">@errorMessage</p>
+    }
+</div>
+
+<style>
+    .login-container {
+        max-width: 400px;
+        margin: 50px auto;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background-color: #f9f9f9;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .login-container h3 {
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 1.5rem;
+        color: #333;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-size: 0.9rem;
+        color: #555;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+    }
+
+    .btn-submit {
+        width: 100%;
+        padding: 10px;
+        background-color: #007bff;
+        border: none;
+        border-radius: 4px;
+        font-size: 1rem;
+        color: white;
+        cursor: pointer;
+    }
+
+    .btn-submit:hover {
+        background-color: #0056b3;
+    }
+
+    .btn-secondary {
+        width: 100%;
+        padding: 10px;
+        background-color: #6c757d;
+        border: none;
+        border-radius: 4px;
+        font-size: 1rem;
+        color: white;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+
+    .btn-secondary:hover {
+        background-color: #5a6268;
+    }
+
+    .error-message {
+        color: red;
+        text-align: center;
+        margin-top: 10px;
+    }
+</style>
+
+@code {
+    private Credentials credentials = new();
+    private string? errorMessage;
+
+    protected override void OnInitialized()
+    {
+        // If user is already authenticated, redirect to home
+        if (AuthService.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/");
+        }
+    }
+
+    private async Task HandleLoginAsync()
+    {
+        try
+        {
+            var success = await AuthService.LoginAsync(credentials.Username, credentials.Password);
+            if (success)
+            {
+                Navigation.NavigateTo("/", true);
+            }
+            else
+            {
+                errorMessage = "Invalid username or password.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "An error occurred during login. Please try again.";
+        }
+    }
+
+    private void NavigateToRegister()
+    {
+        Navigation.NavigateTo("/register");
+    }
+
+    private class Credentials
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+}

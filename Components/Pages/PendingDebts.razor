@@ -1,0 +1,137 @@
+@page "/pending-debts"
+@inject BudgetFlow.Services.DebtHistoryService DebtHistoryService
+@inherits AuthenticatedPageBase
+
+<div class="pending-debts-container">
+    <h2>Pending Debts</h2>
+
+    <div class="search-and-filters">
+        <input type="text" @bind="searchTerm" @bind:event="oninput" class="search-input" placeholder="Search debts..." />
+        <select @bind="selectedTag" class="filter-dropdown">
+            <option value="All">All Tags</option>
+            @foreach (var tag in Tags)
+            {
+                <option value="@tag">@tag</option>
+            }
+        </select>
+    </div>
+
+    <div class="debts-summary">
+        <p>Total Debts: <strong>@TotalDebts</strong></p>
+        <p>Total Amount: <strong>$@TotalAmount</strong></p>
+    </div>
+
+    <table class="debts-table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Tag</th>
+                <th>Source</th>
+                <th>Amount</th>
+                <th>Due Date</th>
+                <th>Notes</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var debt in FilteredDebts)
+            {
+                <tr>
+                    <td>@debt.Title</td>
+                    <td>@debt.Tag</td>
+                    <td>@debt.Source</td>
+                    <td>$@debt.Amount</td>
+                    <td>@(debt.DueDate.HasValue ? debt.DueDate.Value.ToShortDateString() : "N/A")</td>
+                    <td>@debt.Notes</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<style>
+    .pending-debts-container {
+        max-width: 800px;
+        margin: 20px auto;
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        background: #fdfdfd;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 24px;
+        font-weight: bold;
+    }
+
+    .search-and-filters {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .search-input, .filter-dropdown {
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+    }
+
+    .search-input {
+        width: 50%;
+    }
+
+    .filter-dropdown {
+        width: 20%;
+    }
+
+    .debts-summary {
+        margin-bottom: 20px;
+        font-size: 16px;
+    }
+
+    .debts-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+
+        .debts-table th, .debts-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .debts-table th {
+            background-color: #333;
+            color: #fff;
+        }
+
+        .debts-table tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+</style>
+
+@code {
+    private string searchTerm = string.Empty;
+    private string selectedTag = "All";
+    private List<string> Tags = new();
+    private List<BudgetFlow.Models.Debt> FilteredDebts = new();
+
+    private int TotalDebts => FilteredDebts.Count;
+    private decimal TotalAmount => FilteredDebts.Sum(d => d.Amount);
+
+    protected override async Task OnInitializedAsync()
+    {
+        Tags = await DebtHistoryService.GetDistinctTagsAsync();
+        await UpdateFilteredDebts();
+    }
+
+    private async Task UpdateFilteredDebts()
+    {
+        FilteredDebts = await DebtHistoryService.GetFilteredDebtsAsync(searchTerm, selectedTag);
+    }
+}
