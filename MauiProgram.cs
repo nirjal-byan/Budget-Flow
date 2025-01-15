@@ -21,7 +21,7 @@ namespace BudgetFlow
             // Register UserService as a Singleton
             builder.Services.AddSingleton<AuthenticationService>();
 
-
+            builder.Services.AddScoped<BalanceService>();
             builder.Services.AddSingleton<AddTransactionService>();
             builder.Services.AddSingleton<AddDebtService>();
             builder.Services.AddScoped<TransactionHistoryService>();
