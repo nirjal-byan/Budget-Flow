@@ -1,6 +1,7 @@
-@page "/transactions"
+﻿@page "/transactions"
 @inject BudgetFlow.Services.AddTransactionService TransactionService
 @inject BudgetFlow.Services.AuthenticationService AuthService
+@inject BudgetFlow.Services.BalanceService BalanceService
 
 <div class="transaction-container">
     @if (!AuthService.IsAuthenticated)
@@ -13,6 +14,13 @@
     }
     else
     {
+        @if (currentBalance.HasValue)
+        {
+            <div class="balance-info @(currentBalance.Value >= 0 ? "positive" : "negative")">
+                Current Balance: $@currentBalance.Value.ToString("N2")
+            </div>
+        }
+
         <h3 class="title">Add a transaction</h3>
         <div class="transaction-type">
             <button class="btn-type @(transaction.Type == "Debit" ? "btn-debit active" : "btn-debit")"
@@ -75,6 +83,10 @@
             <button type="submit" class="btn-save">Save</button>
         </EditForm>
 
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <p class="error-message">@errorMessage</p>
+        }
         @if (!string.IsNullOrEmpty(successMessage))
         {
             <p class="success-message">@successMessage</p>
@@ -91,6 +103,25 @@
         border-radius: 8px;
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         font-family: Arial, sans-serif;
+    }
+
+    .balance-info {
+        text-align: center;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+        font-size: 18px;
+        font-weight: bold;
+    }
+
+    .positive {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .negative {
+        background-color: #f8d7da;
+        color: #721c24;
     }
 
     .login-message {
@@ -200,9 +231,13 @@
         }
 
     .error-message {
-        color: red;
-        font-size: 14px;
-        margin-top: 5px;
+        color: #dc3545;
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        padding: 10px;
+        border-radius: 4px;
+        margin-top: 10px;
+        text-align: center;
     }
 
     .success-message {
@@ -211,18 +246,25 @@
         font-size: 16px;
         margin-top: 10px;
     }
+
+    .btn-add-tag {
+        width: auto !important;
+        padding: 10px 20px !important;
+    }
 </style>
 
 @code {
     private BudgetFlow.Models.Transaction transaction = new();
     private string successMessage;
+    private string errorMessage;
     private string newTag;
     private string tagErrorMessage;
+    private decimal? currentBalance;
     private List<string> tagOptions = new List<string>
     {
         "Monthly",
         "Yearly",
-		"Rent",
+        "Rent",
         "Groceries",
         "EMI",
         "Fuel",
@@ -234,33 +276,57 @@
         "Miscellaneous"
     };
 
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthService.IsAuthenticated)
+        {
+            currentBalance = await BalanceService.GetCurrentBalanceAsync();
+        }
+    }
+
     private async Task HandleSaveAsync()
     {
         try
         {
+            errorMessage = string.Empty;
+            successMessage = string.Empty;
+
             if (!AuthService.IsAuthenticated)
             {
-                successMessage = "You must be logged in to add transactions.";
+                errorMessage = "You must be logged in to add transactions.";
                 return;
             }
 
             if (string.IsNullOrEmpty(transaction.Type))
             {
-                successMessage = "Please select Debit or Credit before saving!";
+                errorMessage = "Please select Debit or Credit before saving!";
                 return;
+            }
+
+            if (transaction.Type == "Debit")
+            {
+                bool hasSufficientBalance = await BalanceService.HasSufficientBalanceAsync(transaction.Amount);
+                if (!hasSufficientBalance)
+                {
+                    errorMessage = "Insufficient balance! Please add funds before making this transaction.";
+                    return;
+                }
             }
 
             await TransactionService.AddTransactionAsync(transaction);
             successMessage = $"Transaction '{transaction.Title}' of type '{transaction.Type}' added successfully!";
             transaction = new BudgetFlow.Models.Transaction();
+
+            // Update the current balance after successful transaction
+            currentBalance = await BalanceService.GetCurrentBalanceAsync();
         }
         catch (UnauthorizedAccessException)
         {
-            successMessage = "You must be logged in to add transactions.";
+            errorMessage = "You must be logged in to add transactions.";
         }
         catch (Exception ex)
         {
-            successMessage = $"Error adding transaction: {ex.Message}";
+            errorMessage = $"Error adding transaction: {ex.Message}";
         }
     }
 

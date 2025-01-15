@@ -43,6 +43,12 @@ namespace BudgetFlow.Services
             return currentBalance - pendingDebts;
         }
 
+        public async Task<bool> HasSufficientBalanceAsync(decimal amount)
+        {
+            var currentBalance = await GetCurrentBalanceAsync();
+            return currentBalance >= amount;
+        }
+
         public async Task<DashboardSummary> GetDashboardSummaryAsync()
         {
             return new DashboardSummary
