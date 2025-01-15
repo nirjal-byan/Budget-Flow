@@ -1,6 +1,9 @@
-@page "/pending-debts"
+﻿@page "/pending-debts"
 @inject BudgetFlow.Services.DebtHistoryService DebtHistoryService
 @inject BudgetFlow.Services.AuthenticationService AuthService
+@inject BudgetFlow.Services.BalanceService BalanceService
+@inject BudgetFlow.Services.AddDebtService DebtService
+@inject BudgetFlow.Services.AddTransactionService TransactionService
 
 <div class="pending-debts-container">
     @if (!AuthService.IsAuthenticated)
@@ -27,32 +30,62 @@
         <div class="debts-summary">
             <p>Total Debts: <strong>@TotalDebts</strong></p>
             <p>Total Amount: <strong>$@TotalAmount</strong></p>
+            <p>Available Balance: <strong>$@availableBalance</strong></p>
         </div>
-        <table class="debts-table">
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Tag</th>
-                    <th>Source</th>
-                    <th>Amount</th>
-                    <th>Due Date</th>
-                    <th>Notes</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var debt in FilteredDebts)
-                {
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger">
+                @errorMessage
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <div class="alert alert-success">
+                @successMessage
+            </div>
+        }
+        @if (FilteredDebts.Any())
+        {
+            <table class="debts-table">
+                <thead>
                     <tr>
-                        <td>@debt.Title</td>
-                        <td>@debt.Tag</td>
-                        <td>@debt.Source</td>
-                        <td>$@debt.Amount</td>
-                        <td>@(debt.DueDate.HasValue ? debt.DueDate.Value.ToShortDateString() : "N/A")</td>
-                        <td>@debt.Notes</td>
+                        <th>Title</th>
+                        <th>Tag</th>
+                        <th>Source</th>
+                        <th>Amount</th>
+                        <th>Due Date</th>
+                        <th>Notes</th>
+                        <th>Actions</th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach (var debt in FilteredDebts.Where(d => d.Status == "Pending"))
+                    {
+                        <tr class="@(debt.Status == "Paid" ? "fade-out" : "")">
+                            <td>@debt.Title</td>
+                            <td>@debt.Tag</td>
+                            <td>@debt.Source</td>
+                            <td>$@debt.Amount</td>
+                            <td>@(debt.DueDate.HasValue ? debt.DueDate.Value.ToShortDateString() : "N/A")</td>
+                            <td>@debt.Notes</td>
+                            <td>
+                                <button class="clear-debt-btn"
+                                        @onclick="() => ClearDebtAsync(debt)"
+                                        disabled="@(debt.Amount > availableBalance)">
+                                    Clear Debt
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="no-debts-message">
+                <p>No pending debts found.</p>
+            </div>
+        }
     }
 </div>
 
@@ -125,28 +158,105 @@
     .debts-summary {
         margin-bottom: 20px;
         font-size: 16px;
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        border: 1px solid #e9ecef;
     }
+
+        .debts-summary p {
+            margin: 5px 0;
+        }
+
+        .debts-summary strong {
+            color: #2c3e50;
+        }
 
     .debts-table {
         width: 100%;
         border-collapse: collapse;
         font-size: 14px;
+        margin-top: 20px;
+        background-color: white;
     }
 
         .debts-table th, .debts-table td {
             border: 1px solid #ddd;
-            padding: 10px;
-            text-align: center;
+            padding: 12px;
+            text-align: left;
         }
 
         .debts-table th {
             background-color: #333;
             color: #fff;
+            font-weight: 600;
         }
 
         .debts-table tbody tr:nth-child(even) {
             background-color: #f9f9f9;
         }
+
+        .debts-table tbody tr:hover {
+            background-color: #f5f5f5;
+        }
+
+    .clear-debt-btn {
+        padding: 8px 16px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 14px;
+        width: 100%;
+        max-width: 120px;
+    }
+
+        .clear-debt-btn:hover:not([disabled]) {
+            background-color: #45a049;
+            transform: translateY(-1px);
+        }
+
+        .clear-debt-btn[disabled] {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+    .alert {
+        padding: 15px;
+        margin: 15px 0;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+
+    .alert-danger {
+        background-color: #ffebee;
+        color: #c62828;
+        border: 1px solid #ffcdd2;
+    }
+
+    .alert-success {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+        border: 1px solid #c8e6c9;
+    }
+
+    .fade-out {
+        animation: fadeOut 0.5s ease-out forwards;
+    }
+
+    .no-debts-message {
+        text-align: center;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        margin-top: 20px;
+        color: #6c757d;
+    }
+
+    
 </style>
 
 @code {
@@ -154,16 +264,25 @@
     private string selectedTag = "All";
     private List<string> Tags = new();
     private List<BudgetFlow.Models.Debt> FilteredDebts = new();
-    private int TotalDebts => FilteredDebts.Count;
-    private decimal TotalAmount => FilteredDebts.Sum(d => d.Amount);
+    private decimal availableBalance = 0;
+    private string errorMessage = string.Empty;
+    private string successMessage = string.Empty;
+    private int TotalDebts => FilteredDebts.Count(d => d.Status == "Pending");
+    private decimal TotalAmount => FilteredDebts.Where(d => d.Status == "Pending").Sum(d => d.Amount);
 
     protected override async Task OnInitializedAsync()
     {
         if (AuthService.IsAuthenticated)
         {
-            Tags = await DebtHistoryService.GetDistinctTagsAsync();
-            await UpdateFilteredDebts();
+            await RefreshDataAsync();
         }
+    }
+
+    private async Task RefreshDataAsync()
+    {
+        Tags = await DebtHistoryService.GetDistinctTagsAsync();
+        await UpdateFilteredDebts();
+        availableBalance = await BalanceService.GetCurrentBalanceAsync();
     }
 
     private async Task UpdateFilteredDebts()
@@ -171,6 +290,42 @@
         if (AuthService.IsAuthenticated)
         {
             FilteredDebts = await DebtHistoryService.GetFilteredDebtsAsync(searchTerm, selectedTag);
+        }
+    }
+
+    private async Task ClearDebtAsync(BudgetFlow.Models.Debt debt)
+    {
+        try
+        {
+            if (await BalanceService.HasSufficientBalanceAsync(debt.Amount))
+            {
+                var transaction = new BudgetFlow.Models.Transaction
+                    {
+                        Title = $"Debt Payment: {debt.Title}",
+                        Tag = debt.Tag,
+                        Type = "Debit",
+                        Amount = debt.Amount,
+                        Date = DateTime.UtcNow,
+                        Notes = $"Cleared debt: {debt.Notes}"
+                    };
+
+                await TransactionService.AddTransactionAsync(transaction);
+                await DebtService.UpdateDebtPaymentAsync(debt.Id, debt.Amount);
+                await RefreshDataAsync();
+                successMessage = $"Successfully cleared debt: {debt.Title}";
+                errorMessage = string.Empty;
+                StateHasChanged();
+            }
+            else
+            {
+                errorMessage = "Insufficient balance to clear this debt.";
+                successMessage = string.Empty;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error clearing debt: {ex.Message}";
+            successMessage = string.Empty;
         }
     }
 }

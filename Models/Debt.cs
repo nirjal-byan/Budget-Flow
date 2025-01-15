@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace BudgetFlow.Models
 {
@@ -27,8 +23,14 @@ namespace BudgetFlow.Models
         [JsonPropertyName("amount")]
         public decimal Amount { get; set; }
 
+        [JsonPropertyName("amountPaid")]
+        public decimal AmountPaid { get; set; } = 0;
+
         [JsonPropertyName("dueDate")]
         public DateTime? DueDate { get; set; }
+
+        [JsonPropertyName("lastPaymentDate")]
+        public DateTime? LastPaymentDate { get; set; }
 
         [JsonPropertyName("notes")]
         public string Notes { get; set; } = string.Empty;
@@ -38,5 +40,8 @@ namespace BudgetFlow.Models
 
         [JsonPropertyName("status")]
         public string Status { get; set; } = "Pending";  // Pending, Paid, Overdue
+
+        // Calculate remaining amount
+        public decimal RemainingAmount => Amount - AmountPaid;
     }
 }
