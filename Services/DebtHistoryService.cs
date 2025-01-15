@@ -37,5 +37,14 @@ namespace BudgetFlow.Services
                 .Distinct()
                 .ToList();
         }
+
+        public async Task<List<Debt>> GetPendingDebtsAsync()
+        {
+            var debts = await _addDebtService.GetUserDebtsAsync();
+            return debts
+                .Where(d => d.Status == "Pending")
+                .OrderBy(d => d.DueDate)
+                .ToList();
+        }
     }
 }

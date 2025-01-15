@@ -42,5 +42,14 @@ namespace BudgetFlow.Services
                 .Distinct()
                 .ToList();
         }
+
+        public async Task<List<Transaction>> GetRecentTransactionsAsync(int count)
+        {
+            var transactions = await _transactionService.GetUserTransactionsAsync();
+            return transactions
+                .OrderByDescending(t => t.Date ?? t.CreatedAt)
+                .Take(count)
+                .ToList();
+        }
     }
 }
