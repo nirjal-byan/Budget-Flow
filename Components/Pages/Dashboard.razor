@@ -4,6 +4,7 @@
 @inject BudgetFlow.Services.TransactionHistoryService TransactionHistoryService
 @inject BudgetFlow.Services.DebtHistoryService DebtHistoryService
 @using BudgetFlow.Models
+@using MudBlazor
 
 <div class="dashboard-container">
     @if (!AuthService.IsAuthenticated)
@@ -63,6 +64,17 @@
                     <p class="amount">$@dashboardSummary.AvailableBalance.ToString("N2")</p>
                     <p class="description">After deducting pending debts</p>
                 </div>
+            </div>
+
+            <div class="line-graph-container">
+                <h3>Transaction Trends</h3>
+                <MudChart ChartType="ChartType.Line"
+                          ChartSeries="@chartSeries"
+                          @bind-SelectedIndex="selectedIndex"
+                          XAxisLabels="@chartLabels"
+                          Width="100%"
+                          Height="350px">
+                </MudChart>
             </div>
 
             <div class="tables-row">
@@ -392,7 +404,14 @@
         .login-link:hover {
             background-color: #218838;
         }
-    /* Keep your existing styles unchanged */
+    /* Additional styles for the chart */
+    .line-graph-container {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        padding: 15px;
+        margin-bottom: 20px;
+    }
 </style>
 
 @code {
@@ -403,6 +422,10 @@
     private DateTime? endDate;
     private string selectedDateRange = "30";
 
+    private List<ChartSeries> chartSeries = new();
+    private string[] chartLabels = Array.Empty<string>();
+    private int selectedIndex = -1;
+
     protected override async Task OnInitializedAsync()
     {
         if (AuthService.IsAuthenticated)
@@ -412,13 +435,14 @@
         }
     }
 
-    private async Task SetDefaultDateRange()
+    private Task SetDefaultDateRange()
     {
         endDate = DateTime.Today;
         if (int.TryParse(selectedDateRange, out int days))
         {
             startDate = endDate.Value.AddDays(-days);
         }
+        return Task.CompletedTask;
     }
 
     private async Task LoadDashboardDataAsync()
@@ -428,10 +452,51 @@
             dashboardSummary = await BalanceService.GetDashboardSummaryAsync(startDate, endDate);
             recentTransactions = await TransactionHistoryService.GetTopTransactionsByAmountAsync(5, startDate, endDate);
             pendingDebts = await DebtHistoryService.GetTopPendingDebtsByAmountAsync(5, startDate, endDate);
+            await LoadLineChartDataAsync();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading dashboard data: {ex.Message}");
+        }
+    }
+
+    private async Task LoadLineChartDataAsync()
+    {
+        try
+        {
+            var days = (endDate.Value - startDate.Value).Days + 1;
+            var dates = Enumerable.Range(0, days)
+                .Select(i => startDate.Value.AddDays(i))
+                .ToList();
+
+            chartLabels = dates.Select(d => d.ToString("MM/dd")).ToArray();
+
+            var transactionData = new double[dates.Count];
+
+            foreach (var transaction in recentTransactions)
+            {
+                if (transaction.Date.HasValue)
+                {
+                    var index = dates.FindIndex(d => d.Date == transaction.Date.Value.Date);
+                    if (index >= 0)
+                    {
+                        transactionData[index] += (double)transaction.Amount;
+                    }
+                }
+            }
+
+            chartSeries = new List<ChartSeries>
+            {
+                new ChartSeries
+                {
+                    Name = "Daily Transactions",
+                    Data = transactionData
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading chart data: {ex.Message}");
         }
     }
 
