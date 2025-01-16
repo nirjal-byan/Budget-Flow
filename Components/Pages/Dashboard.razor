@@ -67,7 +67,7 @@
             </div>
 
             <div class="line-graph-container">
-                <h3>Transaction Trends</h3>
+                <h3>Transactions Graph</h3>
                 <MudChart ChartType="ChartType.Line"
                           ChartSeries="@chartSeries"
                           @bind-SelectedIndex="selectedIndex"
@@ -80,8 +80,12 @@
             <div class="tables-row">
                 <div class="table-section">
                     <div class="table-header">
-                        <h3>Highest Transactions</h3>
+                        <h3>Transactions</h3>
                         <div class="header-actions">
+                            <button class="sort-button @(isAscending ? "" : "active")" @onclick="() => ToggleSort()">
+                                @(isAscending ? "Sort Highest" : "Sort Lowest")
+                                <span class="sort-icon">@(isAscending ? "↑" : "↓")</span>
+                            </button>
                             <span class="date-range">@GetDateRangeDisplay()</span>
                             <a href="history" class="view-all-link">View All</a>
                         </div>
@@ -98,7 +102,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var transaction in recentTransactions)
+                                @foreach (var transaction in GetSortedTransactions())
                                 {
                                     <tr>
                                         <td><span class="transaction-type @transaction.Type.ToLower()">@transaction.Type</span></td>
@@ -168,7 +172,6 @@
     }
 </div>
 
-
 <style>
     .date-filter-section {
         background: white;
@@ -187,18 +190,18 @@
         gap: 8px;
     }
 
-        .filter-group label {
-            color: #666;
-            font-size: 14px;
-        }
+    .filter-group label {
+        color: #666;
+        font-size: 14px;
+    }
 
-        .filter-group select,
-        .filter-group input {
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
+    .filter-group select,
+    .filter-group input {
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+    }
 
     .filter-button,
     .reset-button {
@@ -215,18 +218,18 @@
         color: white;
     }
 
-        .filter-button:hover {
-            background-color: #0056b3;
-        }
+    .filter-button:hover {
+        background-color: #0056b3;
+    }
 
     .reset-button {
         background-color: #6c757d;
         color: white;
     }
 
-        .reset-button:hover {
-            background-color: #5a6268;
-        }
+    .reset-button:hover {
+        background-color: #5a6268;
+    }
 
     .date-range {
         font-size: 12px;
@@ -263,23 +266,23 @@
         text-align: center;
     }
 
-        .balance-card h4 {
-            margin: 0;
-            color: #666;
-            font-size: 16px;
-        }
+    .balance-card h4 {
+        margin: 0;
+        color: #666;
+        font-size: 16px;
+    }
 
-        .balance-card .amount {
-            font-size: 24px;
-            font-weight: bold;
-            margin: 10px 0;
-        }
+    .balance-card .amount {
+        font-size: 24px;
+        font-weight: bold;
+        margin: 10px 0;
+    }
 
-        .balance-card .description {
-            color: #666;
-            font-size: 12px;
-            margin: 0;
-        }
+    .balance-card .description {
+        color: #666;
+        font-size: 12px;
+        margin: 0;
+    }
 
     .positive {
         background: linear-gradient(135deg, #28a745, #20c997);
@@ -296,11 +299,11 @@
         color: white;
     }
 
-        .positive h4, .positive .description,
-        .negative h4, .negative .description,
-        .debt h4, .debt .description {
-            color: rgba(255, 255, 255, 0.8);
-        }
+    .positive h4, .positive .description,
+    .negative h4, .negative .description,
+    .debt h4, .debt .description {
+        color: rgba(255, 255, 255, 0.8);
+    }
 
     .tables-row {
         display: flex;
@@ -324,11 +327,11 @@
         border-bottom: 1px solid #eee;
     }
 
-        .table-header h3 {
-            margin: 0;
-            font-size: 16px;
-            color: #444;
-        }
+    .table-header h3 {
+        margin: 0;
+        font-size: 16px;
+        color: #444;
+    }
 
     .view-all-link {
         background-color: #007bff;
@@ -339,9 +342,41 @@
         font-size: 12px;
     }
 
-        .view-all-link:hover {
-            background-color: #0056b3;
-        }
+    .view-all-link:hover {
+        background-color: #0056b3;
+    }
+
+    .sort-button {
+        background-color: #6c757d;
+        color: white;
+        padding: 4px 10px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        margin-right: 10px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        transition: background-color 0.2s;
+    }
+
+    .sort-button:hover {
+        background-color: #5a6268;
+    }
+
+    .sort-button.active {
+        background-color: #28a745;
+    }
+
+    .sort-button.active:hover {
+        background-color: #218838;
+    }
+
+    .sort-icon {
+        font-size: 14px;
+        font-weight: bold;
+    }
 
     .data-table {
         width: 100%;
@@ -349,28 +384,28 @@
         font-size: 13px;
     }
 
-        .data-table th {
-            background-color: #f8f9fa;
-            color: #495057;
-            font-weight: 600;
-            padding: 8px;
-            text-align: left;
-            border-bottom: 1px solid #dee2e6;
-        }
+    .data-table th {
+        background-color: #f8f9fa;
+        color: #495057;
+        font-weight: 600;
+        padding: 8px;
+        text-align: left;
+        border-bottom: 1px solid #dee2e6;
+    }
 
-        .data-table td {
-            padding: 8px;
-            border-bottom: 1px solid #eee;
-            color: #495057;
-        }
+    .data-table td {
+        padding: 8px;
+        border-bottom: 1px solid #eee;
+        color: #495057;
+    }
 
-        .data-table tr:last-child td {
-            border-bottom: none;
-        }
+    .data-table tr:last-child td {
+        border-bottom: none;
+    }
 
-        .data-table tr:hover {
-            background-color: #f8f9fa;
-        }
+    .data-table tr:hover {
+        background-color: #f8f9fa;
+    }
 
     .no-data {
         text-align: center;
@@ -402,10 +437,10 @@
         font-size: 14px;
     }
 
-        .login-link:hover {
-            background-color: #218838;
-        }
-    /* Additional styles for the chart */
+    .login-link:hover {
+        background-color: #218838;
+    }
+
     .line-graph-container {
         background: white;
         border-radius: 8px;
@@ -416,72 +451,78 @@
 </style>
 
 @code {
-    // Variables to store dashboard, transaction, and debt data, along with date range and chart data
     private DashboardSummary? dashboardSummary;
     private List<Transaction> recentTransactions = new();
     private List<Debt> pendingDebts = new();
     private DateTime? startDate;
     private DateTime? endDate;
-    private string selectedDateRange = "30";
+    private string selectedDateRange = "7";
+    private bool isAscending = false;
 
     private List<ChartSeries> chartSeries = new();
     private string[] chartLabels = Array.Empty<string>();
     private int selectedIndex = -1;
 
-    // OnInitializedAsync is called when the component is initialized to check authentication and load data
     protected override async Task OnInitializedAsync()
     {
         if (AuthService.IsAuthenticated)
         {
-            await SetDefaultDateRange();  // Set the default date range when the user is authenticated
-            await LoadDashboardDataAsync();  // Load data related to the dashboard
+            await SetDefaultDateRange();
+            await LoadDashboardDataAsync();
         }
     }
 
-    // SetDefaultDateRange sets the date range based on the selected range (e.g., last 30 days)
+    @code {
     private Task SetDefaultDateRange()
     {
-        endDate = DateTime.Today;  // Set end date to today
+        endDate = DateTime.Today;
         if (int.TryParse(selectedDateRange, out int days))
         {
-            startDate = endDate.Value.AddDays(-days);  // Calculate start date based on selected range
+            startDate = endDate.Value.AddDays(-days);
         }
         return Task.CompletedTask;
     }
 
-    // LoadDashboardDataAsync fetches all the required data for dashboard display
+    private IEnumerable<Transaction> GetSortedTransactions()
+    {
+        return isAscending
+            ? recentTransactions.OrderBy(t => t.Amount)
+            : recentTransactions.OrderByDescending(t => t.Amount);
+    }
+
+    private void ToggleSort()
+    {
+        isAscending = !isAscending;
+        StateHasChanged();
+    }
+
     private async Task LoadDashboardDataAsync()
     {
         try
         {
-            // Fetches the dashboard summary, recent transactions, and pending debts
             dashboardSummary = await BalanceService.GetDashboardSummaryAsync(startDate, endDate);
             recentTransactions = await TransactionHistoryService.GetTopTransactionsByAmountAsync(5, startDate, endDate);
             pendingDebts = await DebtHistoryService.GetTopPendingDebtsByAmountAsync(5, startDate, endDate);
-            await LoadLineChartDataAsync();  // Loads data for the line chart
+            await LoadLineChartDataAsync();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading dashboard data: {ex.Message}");  // Log any errors during data loading
+            Console.WriteLine($"Error loading dashboard data: {ex.Message}");
         }
     }
 
-    // LoadLineChartDataAsync prepares the data for the line chart display
     private async Task LoadLineChartDataAsync()
     {
         try
         {
-            // Calculate the number of days between start and end date for chart labels
             var days = (endDate.Value - startDate.Value).Days + 1;
             var dates = Enumerable.Range(0, days)
                 .Select(i => startDate.Value.AddDays(i))
                 .ToList();
 
-            chartLabels = dates.Select(d => d.ToString("MM/dd")).ToArray();  // Format the dates as chart labels
+            chartLabels = dates.Select(d => d.ToString("MM/dd")).ToArray();
 
-            var transactionData = new double[dates.Count];  // Array to store transaction amounts for each date
-
-            // Populate transaction data based on the dates
+            var transactionData = new double[dates.Count];
             foreach (var transaction in recentTransactions)
             {
                 if (transaction.Date.HasValue)
@@ -489,12 +530,11 @@
                     var index = dates.FindIndex(d => d.Date == transaction.Date.Value.Date);
                     if (index >= 0)
                     {
-                        transactionData[index] += (double)transaction.Amount;  // Add amount to the respective date
+                        transactionData[index] += (double)transaction.Amount;
                     }
                 }
             }
 
-            // Prepare chart series data for rendering
             chartSeries = new List<ChartSeries>
             {
                 new ChartSeries
@@ -506,54 +546,50 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading chart data: {ex.Message}");  // Log any errors during chart data loading
+            Console.WriteLine($"Error loading chart data: {ex.Message}");
         }
     }
 
-    // ApplyFilter is called when a filter is applied (e.g., date range selection)
     private async Task ApplyFilter()
     {
-        if (selectedDateRange != "custom")  // If not a custom date range, set default range
+        if (selectedDateRange != "custom")
         {
             await SetDefaultDateRange();
         }
-        else if (startDate > endDate)  // If start date is after end date, swap them
+        else if (startDate > endDate)
         {
             var temp = startDate;
             startDate = endDate;
             endDate = temp;
         }
 
-        await LoadDashboardDataAsync();  // Reload the dashboard data with the applied filter
+        await LoadDashboardDataAsync();
     }
 
-    // ResetFilter resets the date range filter to the default value (last 30 days)
     private async Task ResetFilter()
     {
-        selectedDateRange = "30";  // Reset to default range
-        await SetDefaultDateRange();  // Set default date range
-        await LoadDashboardDataAsync();  // Reload the dashboard data with the default filter
+        selectedDateRange = "7";
+        await SetDefaultDateRange();
+        await LoadDashboardDataAsync();
     }
 
-    // GetDateRangeDisplay returns a string representation of the selected date range
     private string GetDateRangeDisplay()
     {
         if (startDate.HasValue && endDate.HasValue)
         {
-            return $"{startDate.Value.ToShortDateString()} - {endDate.Value.ToShortDateString()}";  // Display formatted date range
+            return $"{startDate.Value.ToShortDateString()} - {endDate.Value.ToShortDateString()}";
         }
-        return "All Time";  // Return "All Time" if no date range is set
+        return "All Time";
     }
 
-    // GetBalanceClass applies CSS class based on the balance amount (positive or negative)
     private string GetBalanceClass(decimal amount)
     {
-        return amount >= 0 ? "positive" : "negative";  // Return "positive" or "negative" based on the amount
+        return amount >= 0 ? "positive" : "negative";
     }
 
-    // IsDebtOverdue checks if the given debt is overdue based on its due date
     private bool IsDebtOverdue(Debt debt)
     {
-        return debt.DueDate.HasValue && debt.DueDate.Value < DateTime.Today;  // Check if the due date is in the past
+        return debt.DueDate.HasValue && debt.DueDate.Value < DateTime.Today;
     }
+}
 }
