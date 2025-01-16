@@ -204,6 +204,7 @@
 </style>
 
 @code {
+    // Variables to store search filters and transaction data
     private string searchTerm = string.Empty;
     private string selectedType = "All";
     private string selectedTag = "All";
@@ -212,6 +213,7 @@
     private List<string> tags = new List<string>();
     private List<BudgetFlow.Models.Transaction> filteredTransactions = new List<BudgetFlow.Models.Transaction>();
 
+    // OnInitializedAsync is called when the component is initialized to check authentication and load tags and transactions
     protected override async Task OnInitializedAsync()
     {
         if (AuthService.IsAuthenticated)
@@ -221,6 +223,7 @@
         }
     }
 
+    // UpdateTagsAsync fetches all available tags from the service and updates the tags list
     private async Task UpdateTagsAsync()
     {
         try
@@ -237,12 +240,14 @@
         }
     }
 
+    // UpdateFilteredTransactionsAsync fetches filtered transactions based on search term, type, and tag
     private async Task UpdateFilteredTransactionsAsync()
     {
         try
         {
             filteredTransactions = await HistoryService.GetFilteredTransactionsAsync(searchTerm, selectedType, selectedTag);
 
+            // Filter transactions further based on the selected date range
             if (startDate.HasValue && endDate.HasValue)
             {
                 filteredTransactions = filteredTransactions
@@ -261,24 +266,28 @@
         }
     }
 
+    // OnSearchTermChanged is called when the user changes the search term, and it updates the filtered transactions
     private async Task OnSearchTermChanged(ChangeEventArgs e)
     {
         searchTerm = e.Value?.ToString() ?? string.Empty;
         await UpdateFilteredTransactionsAsync();
     }
 
+    // OnTypeChanged is called when the user changes the transaction type filter, and it updates the filtered transactions
     private async Task OnTypeChanged(ChangeEventArgs e)
     {
         selectedType = e.Value?.ToString() ?? "All";
         await UpdateFilteredTransactionsAsync();
     }
 
+    // OnTagChanged is called when the user changes the tag filter, and it updates the filtered transactions
     private async Task OnTagChanged(ChangeEventArgs e)
     {
         selectedTag = e.Value?.ToString() ?? "All";
         await UpdateFilteredTransactionsAsync();
     }
 
+    // DeleteTransaction removes a transaction by its ID and updates the filtered transactions list
     private async Task DeleteTransaction(int id)
     {
         try

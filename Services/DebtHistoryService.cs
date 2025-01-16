@@ -6,6 +6,7 @@ using BudgetFlow.Models;
 
 namespace BudgetFlow.Services
 {
+    // Service to handle debt history operations including filtering, retrieving distinct tags, and fetching top pending debts by amount
     public class DebtHistoryService
     {
         private readonly AddDebtService _addDebtService;
@@ -15,10 +16,12 @@ namespace BudgetFlow.Services
             _addDebtService = addDebtService;
         }
 
+        // Filters debts based on a search term (title or notes) and a specific tag (or all tags)
         public async Task<List<Debt>> GetFilteredDebtsAsync(string searchTerm, string tag)
         {
             var debts = await _addDebtService.GetUserDebtsAsync();
 
+            // Filter debts based on search term and tag
             return debts
                 .Where(d => (string.IsNullOrWhiteSpace(searchTerm) ||
                             d.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
@@ -27,10 +30,12 @@ namespace BudgetFlow.Services
                 .ToList();
         }
 
+        // Retrieves a list of distinct tags from the user's debts
         public async Task<List<string>> GetDistinctTagsAsync()
         {
             var debts = await _addDebtService.GetUserDebtsAsync();
 
+            // Extract distinct tags from the debts, excluding null or whitespace tags
             return debts
                 .Select(d => d.Tag)
                 .Where(tag => !string.IsNullOrWhiteSpace(tag))
@@ -38,15 +43,18 @@ namespace BudgetFlow.Services
                 .ToList();
         }
 
+        // Retrieves the top 'count' pending debts ordered by the highest remaining amount, with optional date filters
         public async Task<List<Debt>> GetTopPendingDebtsByAmountAsync(int count, DateTime? startDate = null, DateTime? endDate = null)
         {
             var debts = await _addDebtService.GetUserDebtsAsync();
 
+            // Filter debts by start and end date if provided
             if (startDate.HasValue)
                 debts = debts.Where(d => d.DueDate >= startDate.Value).ToList();
             if (endDate.HasValue)
                 debts = debts.Where(d => d.DueDate <= endDate.Value).ToList();
 
+            // Retrieve top 'count' pending debts ordered by remaining amount in descending order
             return debts
                 .Where(d => d.Status == "Pending")
                 .OrderByDescending(d => d.RemainingAmount)

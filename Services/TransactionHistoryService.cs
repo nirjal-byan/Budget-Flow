@@ -7,6 +7,7 @@ using BudgetFlow.Services;
 
 namespace BudgetFlow.Services
 {
+    // Service to handle transaction history operations including filtering, retrieving unique tags, and fetching top transactions by amount
     public class TransactionHistoryService
     {
         private readonly AddTransactionService _transactionService;
@@ -43,10 +44,12 @@ namespace BudgetFlow.Services
                 .ToList();
         }
 
+        // Retrieves the top 'count' transactions ordered by the highest amount, with optional date filters
         public async Task<List<Transaction>> GetTopTransactionsByAmountAsync(int count, DateTime? startDate = null, DateTime? endDate = null)
         {
             var transactions = await _transactionService.GetUserTransactionsAsync();
 
+            // Filter transactions by start and end date if provided
             if (startDate.HasValue)
                 transactions = transactions.Where(t => t.Date >= startDate.Value).ToList();
             if (endDate.HasValue)
@@ -58,6 +61,7 @@ namespace BudgetFlow.Services
                 .ToList();
         }
 
+        // Deletes a specific transaction by its ID
         public async Task DeleteTransactionAsync(int id)
         {
             await _transactionService.DeleteTransactionAsync(id);

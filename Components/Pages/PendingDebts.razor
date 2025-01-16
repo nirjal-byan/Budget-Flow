@@ -261,6 +261,7 @@
 </style>
 
 @code {
+    // Variables to store debt-related data and UI state
     private string searchTerm = string.Empty;
     private string selectedTag = "All";
     private List<string> Tags = new();
@@ -271,6 +272,7 @@
     private int TotalDebts => FilteredDebts.Count(d => d.Status == "Pending");
     private decimal TotalAmount => FilteredDebts.Where(d => d.Status == "Pending").Sum(d => d.Amount);
 
+    // OnInitializedAsync is called when the component is initialized to check authentication and refresh data
     protected override async Task OnInitializedAsync()
     {
         if (AuthService.IsAuthenticated)
@@ -279,6 +281,7 @@
         }
     }
 
+    // RefreshDataAsync fetches distinct tags, filtered debts, and the available balance
     private async Task RefreshDataAsync()
     {
         Tags = await DebtHistoryService.GetDistinctTagsAsync();
@@ -286,6 +289,7 @@
         availableBalance = await BalanceService.GetCurrentBalanceAsync();
     }
 
+    // UpdateFilteredDebtsAsync fetches debts based on the search term and selected tag filters
     private async Task UpdateFilteredDebtsAsync()
     {
         if (AuthService.IsAuthenticated)
@@ -295,24 +299,28 @@
         }
     }
 
+    // OnSearchTermChanged updates the search term and refreshes the filtered debts
     private async Task OnSearchTermChanged(ChangeEventArgs e)
     {
         searchTerm = e.Value?.ToString() ?? string.Empty;
         await UpdateFilteredDebtsAsync();
     }
 
+    // OnTagChanged updates the selected tag filter and refreshes the filtered debts
     private async Task OnTagChanged(ChangeEventArgs e)
     {
         selectedTag = e.Value?.ToString() ?? "All";
         await UpdateFilteredDebtsAsync();
     }
 
+    // ClearDebtAsync clears the specified debt if sufficient balance is available and updates data
     private async Task ClearDebtAsync(BudgetFlow.Models.Debt debt)
     {
         try
         {
             if (await BalanceService.HasSufficientBalanceAsync(debt.Amount))
             {
+                // Create a transaction to record the debt payment
                 var transaction = new BudgetFlow.Models.Transaction
                     {
                         Title = $"Debt Payment: {debt.Title}",
@@ -323,6 +331,7 @@
                         Notes = $"Cleared debt: {debt.Notes}"
                     };
 
+                // Add the transaction and update the debt status
                 await TransactionService.AddTransactionAsync(transaction);
                 await DebtService.UpdateDebtPaymentAsync(debt.Id, debt.Amount);
                 await RefreshDataAsync();

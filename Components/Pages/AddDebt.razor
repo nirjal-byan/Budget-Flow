@@ -2,9 +2,12 @@
 @inject BudgetFlow.Services.AddDebtService DebtService
 @inject BudgetFlow.Services.AuthenticationService AuthService
 
+<!-- Container for the debt form -->
 <div class="debt-container">
+    <!-- Check if the user is authenticated -->
     @if (!AuthService.IsAuthenticated)
     {
+        <!-- Show a login prompt if the user is not logged in -->
         <div class="login-message">
             <h2>Please Login First</h2>
             <p>You need to be logged in to add debts.</p>
@@ -13,10 +16,14 @@
     }
     else
     {
+        <!-- Form to add a new debt -->
         <h3 class="title">Add a Debt</h3>
         <EditForm Model="debt" OnValidSubmit="HandleSaveAsync" class="form-container">
+            <!-- Validation components -->
             <DataAnnotationsValidator />
             <ValidationSummary />
+
+            <!-- Input fields for debt details -->
             <div class="form-group">
                 <label>Title</label>
                 <InputText @bind-Value="debt.Title" class="form-control" placeholder="Enter a Title." />
@@ -46,9 +53,12 @@
                 <label>Notes (Optional)</label>
                 <InputTextArea @bind-Value="debt.Notes" class="form-control" placeholder="Enter a note." />
             </div>
+
+            <!-- Submit button -->
             <button type="submit" class="btn-save">Save</button>
         </EditForm>
 
+        <!-- Success message after saving a debt -->
         @if (!string.IsNullOrEmpty(successMessage))
         {
             <p class="success-message">@successMessage</p>
@@ -56,7 +66,9 @@
     }
 </div>
 
+<!-- Styles for the debt form -->
 <style>
+    /* Styles for the main container */
     .debt-container {
         max-width: 500px;
         margin: 50px auto;
@@ -75,6 +87,7 @@
         color: #333;
     }
 
+    /* Form styles */
     .form-container {
         margin-top: 20px;
     }
@@ -119,6 +132,7 @@
             background-color: #555;
         }
 
+    /* Message styles */
     .success-message {
         text-align: center;
         color: green;
@@ -154,9 +168,11 @@
 </style>
 
 @code {
+    // Model to hold the debt details
     private BudgetFlow.Models.Debt debt = new();
-    private string successMessage;
+    private string successMessage; // Message to display after saving a debt
 
+    // Method to handle saving the debt
     private async Task HandleSaveAsync()
     {
         try
@@ -167,17 +183,17 @@
                 return;
             }
 
-            await DebtService.AddDebtAsync(debt);
-            successMessage = $"Debt '{debt.Title}' added successfully!";
-            debt = new BudgetFlow.Models.Debt();
+            await DebtService.AddDebtAsync(debt); // Save the debt using the service
+            successMessage = $"Debt '{debt.Title}' added successfully!"; // Success message
+            debt = new BudgetFlow.Models.Debt(); // Reset the form
         }
         catch (UnauthorizedAccessException)
         {
-            successMessage = "You must be logged in to add debts.";
+            successMessage = "You must be logged in to add debts."; // Error if user is not logged in
         }
         catch (Exception ex)
         {
-            successMessage = $"Error adding debt: {ex.Message}";
+            successMessage = $"Error adding debt: {ex.Message}"; // General error message
         }
     }
 }

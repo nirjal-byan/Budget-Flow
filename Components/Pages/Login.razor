@@ -118,6 +118,7 @@
         }
     }
 
+    // Navigate user to the Dashboard upon successful login or throw an error if the credentails is incorrect
     private async Task HandleLoginAsync()
     {
         try
@@ -138,11 +139,14 @@
         }
     }
 
+    // Navigate user to register page
     private void NavigateToRegister()
     {
         Navigation.NavigateTo("/register");
     }
 
+
+    // Model class for Credentials
     private class Credentials
     {
         public string Username { get; set; } = string.Empty;

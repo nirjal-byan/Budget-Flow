@@ -118,25 +118,31 @@
 </style>
 
 @code {
+    // Model to store user registration information
     private RegisterModel registerModel = new();
     private string? errorMessage;
 
+    // HandleRegisterAsync is called when the user submits the registration form
+    // It validates the input and attempts to register the user via AuthService
     private async Task HandleRegisterAsync()
     {
         try
         {
+            // Check if currency is selected
             if (string.IsNullOrEmpty(registerModel.Currency))
             {
                 errorMessage = "Please select a currency.";
                 return;
             }
 
+            // Attempt to register the user and get success status and message
             var (success, message) = await AuthService.RegisterAsync(
                 registerModel.Username,
                 registerModel.Password,
                 registerModel.Currency
             );
 
+            // If registration is successful, navigate to login page
             if (success)
             {
                 Navigation.NavigateTo("/login");
@@ -152,11 +158,13 @@
         }
     }
 
+    // NavigateToLogin is called to navigate to the login page
     private void NavigateToLogin()
     {
         Navigation.NavigateTo("/login");
     }
 
+    // RegisterModel class holds the registration form data (Username, Password, Currency)
     private class RegisterModel
     {
         public string Username { get; set; } = string.Empty;

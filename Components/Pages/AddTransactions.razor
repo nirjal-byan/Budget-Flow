@@ -4,6 +4,7 @@
 @inject BudgetFlow.Services.BalanceService BalanceService
 
 <div class="transaction-container">
+    <!-- Check if the user is authenticated -->
     @if (!AuthService.IsAuthenticated)
     {
         <div class="login-message">
@@ -14,6 +15,7 @@
     }
     else
     {
+        <!-- Display current balance if available -->
         @if (currentBalance.HasValue)
         {
             <div class="balance-info @(currentBalance.Value >= 0 ? "positive" : "negative")">
@@ -21,7 +23,10 @@
             </div>
         }
 
+        <!-- Title for the transaction form -->
         <h3 class="title">Add a transaction</h3>
+
+        <!-- Buttons for selecting Debit or Credit transaction type -->
         <div class="transaction-type">
             <button class="btn-type @(transaction.Type == "Debit" ? "btn-debit active" : "btn-debit")"
                     @onclick='() => transaction.Type = "Debit"'>
@@ -33,15 +38,18 @@
             </button>
         </div>
 
+        <!-- Form for adding a transaction -->
         <EditForm Model="transaction" OnValidSubmit="HandleSaveAsync" class="form-container">
             <DataAnnotationsValidator />
             <ValidationSummary />
 
+            <!-- Title input field -->
             <div class="form-group">
                 <label>Title</label>
                 <InputText @bind-Value="transaction.Title" class="form-control" placeholder="Enter a Title." />
             </div>
 
+            <!-- Tag selection dropdown -->
             <div class="form-group">
                 <label>Tag</label>
                 <InputSelect @bind-Value="transaction.Tag" class="form-control">
@@ -53,6 +61,7 @@
                 </InputSelect>
             </div>
 
+            <!-- Option to add a custom tag -->
             <div class="form-group">
                 <label>Add Custom Tag</label>
                 <div style="display: flex; gap: 10px; align-items: center;">
@@ -65,24 +74,29 @@
                 }
             </div>
 
+            <!-- Amount input field -->
             <div class="form-group">
                 <label>Amount</label>
                 <InputNumber @bind-Value="transaction.Amount" class="form-control" placeholder="Enter an Amount." />
             </div>
 
+            <!-- Date input field -->
             <div class="form-group">
                 <label>Date</label>
                 <InputDate @bind-Value="transaction.Date" class="form-control" />
             </div>
 
+            <!-- Notes input field -->
             <div class="form-group">
                 <label>Notes (Optional)</label>
                 <InputTextArea @bind-Value="transaction.Notes" class="form-control" placeholder="Enter a note." />
             </div>
 
+            <!-- Submit button for saving the transaction -->
             <button type="submit" class="btn-save">Save</button>
         </EditForm>
 
+        <!-- Display error or success messages -->
         @if (!string.IsNullOrEmpty(errorMessage))
         {
             <p class="error-message">@errorMessage</p>
@@ -95,6 +109,7 @@
 </div>
 
 <style>
+    /* Styling for transaction form container */
     .transaction-container {
         max-width: 500px;
         margin: 50px auto;
@@ -105,6 +120,7 @@
         font-family: Arial, sans-serif;
     }
 
+    /* Styling for balance info display */
     .balance-info {
         text-align: center;
         padding: 15px;
@@ -124,6 +140,7 @@
         color: #721c24;
     }
 
+    /* Styling for login prompt */
     .login-message {
         text-align: center;
         padding: 40px 20px;
@@ -150,6 +167,7 @@
             background-color: #555;
         }
 
+    /* Title styles */
     .title {
         text-align: center;
         font-size: 24px;
@@ -158,6 +176,7 @@
         color: #333;
     }
 
+    /* Button styles for selecting Debit/Credit */
     .transaction-type {
         display: flex;
         justify-content: center;
@@ -186,6 +205,7 @@
         opacity: 0.8;
     }
 
+    /* Form and input field styles */
     .form-container {
         margin-top: 20px;
     }
@@ -214,6 +234,7 @@
             outline: none;
         }
 
+    /* Save button styles */
     .btn-save {
         display: block;
         width: 100%;
@@ -230,6 +251,7 @@
             background-color: #555;
         }
 
+    /* Error and success message styles */
     .error-message {
         color: #dc3545;
         background-color: #f8d7da;
@@ -254,6 +276,7 @@
 </style>
 
 @code {
+    // Declare necessary variables for transaction, messages, and tags
     private BudgetFlow.Models.Transaction transaction = new();
     private string successMessage;
     private string errorMessage;
@@ -276,6 +299,7 @@
         "Miscellaneous"
     };
 
+    // On page initialization, check if the user is authenticated and load the current balance
     protected override async Task OnInitializedAsync()
     {
         if (AuthService.IsAuthenticated)
@@ -284,6 +308,7 @@
         }
     }
 
+    // Handle form submission to save a new transaction
     private async Task HandleSaveAsync()
     {
         try
@@ -291,18 +316,21 @@
             errorMessage = string.Empty;
             successMessage = string.Empty;
 
+            // Check if the user is authenticated
             if (!AuthService.IsAuthenticated)
             {
                 errorMessage = "You must be logged in to add transactions.";
                 return;
             }
 
+            // Ensure a transaction type (Debit/Credit) is selected
             if (string.IsNullOrEmpty(transaction.Type))
             {
                 errorMessage = "Please select Debit or Credit before saving!";
                 return;
             }
 
+            // Check if there's sufficient balance for Debit transactions
             if (transaction.Type == "Debit")
             {
                 bool hasSufficientBalance = await BalanceService.HasSufficientBalanceAsync(transaction.Amount);
@@ -313,6 +341,7 @@
                 }
             }
 
+            // Add the transaction and update messages
             await TransactionService.AddTransactionAsync(transaction);
             successMessage = $"Transaction '{transaction.Title}' of type '{transaction.Type}' added successfully!";
             transaction = new BudgetFlow.Models.Transaction();
@@ -330,10 +359,12 @@
         }
     }
 
+    // Add a custom tag to the tag options list
     private void AddCustomTag()
     {
         tagErrorMessage = string.Empty;
 
+        // Validate custom tag
         if (string.IsNullOrWhiteSpace(newTag))
         {
             tagErrorMessage = "Custom tag cannot be empty.";
@@ -346,6 +377,7 @@
             return;
         }
 
+        // Add the new tag to the list and clear the input
         tagOptions.Add(newTag);
         newTag = string.Empty;
     }
