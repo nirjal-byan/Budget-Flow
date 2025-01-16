@@ -73,9 +73,6 @@ namespace BudgetFlow.Services
         {
             _currentUser = null;
             OnAuthenticationStateChanged?.Invoke();
-            await Task.CompletedTask;
         }
-
-
     }
 }

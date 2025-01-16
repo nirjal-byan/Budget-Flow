@@ -10,56 +10,63 @@
     <nav class="flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="/dashboard" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Dashboard
+                <span class="bi bi-house-door-fill" aria-hidden="true"></span> Dashboard
             </NavLink>
         </div>
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="/login">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Login
+                <span class="bi bi-box-arrow-in-right" aria-hidden="true"></span> Login
             </NavLink>
         </div>
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="/register">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Register
+                <span class="bi bi-person-plus" aria-hidden="true"></span> Register
             </NavLink>
         </div>
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="/transactions">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Add Transactions
+                <span class="bi bi-cash-stack" aria-hidden="true"></span> Add Transactions
             </NavLink>
         </div>
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="/debt">
-                <span class="bi bi-credit-card-fill-nav-menu" aria-hidden="true"></span> Add Debt
+                <span class="bi bi-credit-card" aria-hidden="true"></span> Add Debt
             </NavLink>
         </div>
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="/history">
-                <span class="bi bi-credit-card-fill-nav-menu" aria-hidden="true"></span> Transaction History
+                <span class="bi bi-clock-history" aria-hidden="true"></span> Transaction History
             </NavLink>
         </div>
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="/pending-debts">
-                <span class="bi bi-credit-card-fill-nav-menu" aria-hidden="true"></span> Pending Debts
+                <span class="bi bi-exclamation-circle" aria-hidden="true"></span> Pending Debts
             </NavLink>
         </div>
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="#" @onclick="HandleLogout">
-                <span class="bi bi-box-arrow-right-nav-menu" aria-hidden="true"></span> Logout
+                <span class="bi bi-box-arrow-right" aria-hidden="true"></span> Logout
             </NavLink>
         </div>
+        <div class="loading-indicator" style="display: @(isLoggingOut ? "block" : "none")">
+            Logging out...
+        </div>
+    </nav>
 
-        @code {
-            [Inject] AuthenticationService AuthService { get; set; } = default!;
-            [Inject] NavigationManager Navigation { get; set; } = default!;
+    @code {
+        private bool isLoggingOut = false;
 
-            private async Task HandleLogout()
-            {
-                await AuthService.LogoutAsync();
-                Navigation.NavigateTo("/login", true);
-            }
+        private async Task HandleLogout()
+        {
+            isLoggingOut = true;
+            StateHasChanged(); // Force a UI update to show the loading state.
+
+            await AuthService.LogoutAsync();
+            isLoggingOut = false;
+            Navigation.NavigateTo("/login", true); // Ensures navigation to login page.
         }
 
-    </nav>
+        [Inject] AuthenticationService AuthService { get; set; } = default!;
+        [Inject] NavigationManager Navigation { get; set; } = default!;
+    }
 </div>
-
