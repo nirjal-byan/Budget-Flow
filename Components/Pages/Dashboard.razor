@@ -1,6 +1,9 @@
 ﻿@page "/dashboard"
 @inject BudgetFlow.Services.BalanceService BalanceService
 @inject BudgetFlow.Services.AuthenticationService AuthService
+@inject BudgetFlow.Services.TransactionHistoryService TransactionHistoryService
+@inject BudgetFlow.Services.DebtHistoryService DebtHistoryService
+@using BudgetFlow.Models
 
 <div class="dashboard-container">
     @if (!AuthService.IsAuthenticated)
@@ -13,7 +16,7 @@
     }
     else
     {
-        <h3 class="welcome-title">Welcome to your Dashboard</h3>
+        <h2>Dashboard Overview</h2>
 
         @if (dashboardSummary != null)
         {
@@ -36,40 +39,126 @@
                     <p class="description">After deducting pending debts</p>
                 </div>
             </div>
+
+            <div class="table-section">
+                <div class="table-header">
+                    <h3>Highest Transactions</h3>
+                    <a href="history" class="view-all-link">View All</a>
+                </div>
+                @if (recentTransactions.Any())
+                {
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Title</th>
+                                <th>Tags</th>
+                                <th>Date</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var transaction in recentTransactions)
+                            {
+                                <tr>
+                                    <td>@transaction.Type</td>
+                                    <td>$@transaction.Amount</td>
+                                    <td>@transaction.Title</td>
+                                    <td>@transaction.Tag</td>
+                                    <td>@(transaction.Date?.ToShortDateString() ?? "N/A")</td>
+                                    <td>@transaction.Notes</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p class="no-data">No recent transactions</p>
+                }
+            </div>
+
+            <div class="table-section">
+                <div class="table-header">
+                    <h3>Pending Debts</h3>
+                    <a href="pending-debts" class="view-all-link">View All</a>
+                </div>
+                @if (pendingDebts.Any())
+                {
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Tag</th>
+                                <th>Source</th>
+                                <th>Amount</th>
+                                <th>Due Date</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var debt in pendingDebts)
+                            {
+                                <tr>
+                                    <td>@debt.Title</td>
+                                    <td>@debt.Tag</td>
+                                    <td>@debt.Source</td>
+                                    <td>$@debt.Amount</td>
+                                    <td>@(debt.DueDate?.ToShortDateString() ?? "N/A")</td>
+                                    <td>@debt.Notes</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p class="no-data">No pending debts</p>
+                }
+            </div>
         }
         else
         {
-            <div class="loading">Loading balance information...</div>
+            <div class="loading">Loading dashboard information...</div>
         }
     }
 </div>
 
 <style>
     .dashboard-container {
-        padding: 20px;
         max-width: 1200px;
-        margin: 0 auto;
+        margin: 30px auto;
+        padding: 20px;
+        font-family: Arial, sans-serif;
     }
 
-    .welcome-title {
+    h2 {
         text-align: center;
-        margin-bottom: 30px;
         color: #333;
-        font-size: 28px;
+        margin-bottom: 30px;
+        font-size: 24px;
     }
 
+    h3 {
+        color: #444;
+        margin: 0;
+        font-size: 20px;
+    }
+
+    /* Balance Cards Styles */
     .balance-cards {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        grid-template-columns: repeat(3, 1fr);
         gap: 20px;
-        margin-top: 20px;
+        margin-bottom: 30px;
     }
 
     .balance-card {
         background: white;
         padding: 20px;
         border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         text-align: center;
     }
 
@@ -96,70 +185,141 @@
         color: white;
     }
 
-        .positive h4, .positive .description {
-            color: rgba(255, 255, 255, 0.8);
-        }
-
     .negative {
         background: linear-gradient(135deg, #dc3545, #c82333);
         color: white;
     }
-
-        .negative h4, .negative .description {
-            color: rgba(255, 255, 255, 0.8);
-        }
 
     .debt {
         background: linear-gradient(135deg, #fd7e14, #f17722);
         color: white;
     }
 
+        .positive h4, .positive .description,
+        .negative h4, .negative .description,
         .debt h4, .debt .description {
             color: rgba(255, 255, 255, 0.8);
         }
 
+    /* Table Section Styles */
+    .table-section {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+
+    .table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #eee;
+    }
+
+    .view-all-link {
+        background-color: #007bff;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 5px;
+        text-decoration: none;
+        font-size: 14px;
+        transition: background-color 0.2s;
+    }
+
+        .view-all-link:hover {
+            background-color: #0056b3;
+            text-decoration: none;
+            color: white;
+        }
+
+    .data-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        background-color: white;
+    }
+
+        .data-table th {
+            background-color: #f8f9fa;
+            color: #495057;
+            font-weight: 600;
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e9ecef;
+            color: #495057;
+        }
+
+        .data-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+    .no-data {
+        text-align: center;
+        padding: 30px;
+        color: #6c757d;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        margin: 0;
+    }
+
     .loading {
         text-align: center;
         padding: 40px;
-        color: #666;
+        color: #6c757d;
         font-size: 18px;
     }
 
     .login-message {
         text-align: center;
-        padding: 40px 20px;
+        padding: 40px;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
         .login-message h2 {
-            margin-bottom: 15px;
-            color: #333;
+            margin-top: 0;
         }
 
         .login-message p {
+            color: #6c757d;
             margin: 20px 0;
-            color: #666;
-            font-size: 16px;
         }
 
     .login-link {
         display: inline-block;
         padding: 10px 20px;
-        background-color: #333;
+        background-color: #28a745;
         color: white;
         text-decoration: none;
         border-radius: 5px;
         font-size: 16px;
-        transition: background-color 0.3s;
+        transition: background-color 0.2s;
     }
 
         .login-link:hover {
-            background-color: #555;
+            background-color: #218838;
             text-decoration: none;
+            color: white;
         }
 </style>
 
 @code {
     private DashboardSummary? dashboardSummary;
+    private List<Transaction> recentTransactions = new();
+    private List<Debt> pendingDebts = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -174,6 +334,8 @@
         try
         {
             dashboardSummary = await BalanceService.GetDashboardSummaryAsync();
+            recentTransactions = await TransactionHistoryService.GetTopTransactionsByAmountAsync(5);
+            pendingDebts = await DebtHistoryService.GetTopPendingDebtsByAmountAsync(5);
         }
         catch (Exception)
         {

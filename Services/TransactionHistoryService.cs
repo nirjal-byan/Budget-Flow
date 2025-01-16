@@ -43,11 +43,11 @@ namespace BudgetFlow.Services
                 .ToList();
         }
 
-        public async Task<List<Transaction>> GetRecentTransactionsAsync(int count)
+        public async Task<List<Transaction>> GetTopTransactionsByAmountAsync(int count)
         {
             var transactions = await _transactionService.GetUserTransactionsAsync();
             return transactions
-                .OrderByDescending(t => t.Date ?? t.CreatedAt)
+                .OrderByDescending(t => t.Amount) // Order by amount instead of date
                 .Take(count)
                 .ToList();
         }
