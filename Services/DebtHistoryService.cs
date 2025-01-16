@@ -38,12 +38,18 @@ namespace BudgetFlow.Services
                 .ToList();
         }
 
-        public async Task<List<Debt>> GetTopPendingDebtsByAmountAsync(int count)
+        public async Task<List<Debt>> GetTopPendingDebtsByAmountAsync(int count, DateTime? startDate = null, DateTime? endDate = null)
         {
             var debts = await _addDebtService.GetUserDebtsAsync();
+
+            if (startDate.HasValue)
+                debts = debts.Where(d => d.DueDate >= startDate.Value).ToList();
+            if (endDate.HasValue)
+                debts = debts.Where(d => d.DueDate <= endDate.Value).ToList();
+
             return debts
                 .Where(d => d.Status == "Pending")
-                .OrderByDescending(d => d.RemainingAmount) // Order by remaining amount
+                .OrderByDescending(d => d.RemainingAmount)
                 .Take(count)
                 .ToList();
         }

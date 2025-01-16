@@ -43,11 +43,17 @@ namespace BudgetFlow.Services
                 .ToList();
         }
 
-        public async Task<List<Transaction>> GetTopTransactionsByAmountAsync(int count)
+        public async Task<List<Transaction>> GetTopTransactionsByAmountAsync(int count, DateTime? startDate = null, DateTime? endDate = null)
         {
             var transactions = await _transactionService.GetUserTransactionsAsync();
+
+            if (startDate.HasValue)
+                transactions = transactions.Where(t => t.Date >= startDate.Value).ToList();
+            if (endDate.HasValue)
+                transactions = transactions.Where(t => t.Date <= endDate.Value).ToList();
+
             return transactions
-                .OrderByDescending(t => t.Amount) // Order by amount instead of date
+                .OrderByDescending(t => t.Amount)
                 .Take(count)
                 .ToList();
         }

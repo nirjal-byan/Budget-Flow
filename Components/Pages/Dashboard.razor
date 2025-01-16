@@ -18,6 +18,31 @@
     {
         <h2>Dashboard Overview</h2>
 
+        <div class="date-filter-section">
+            <div class="filter-group">
+                <label>Date Range:</label>
+                <select @bind="selectedDateRange">
+                    <option value="7">Last 7 Days</option>
+                    <option value="30">Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                    <option value="custom">Custom Range</option>
+                </select>
+            </div>
+            @if (selectedDateRange == "custom")
+            {
+                <div class="filter-group">
+                    <label>From:</label>
+                    <input type="date" @bind="startDate" />
+                </div>
+                <div class="filter-group">
+                    <label>To:</label>
+                    <input type="date" @bind="endDate" />
+                </div>
+            }
+            <button class="filter-button" @onclick="ApplyFilter">Apply Filter</button>
+            <button class="reset-button" @onclick="ResetFilter">Reset</button>
+        </div>
+
         @if (dashboardSummary != null)
         {
             <div class="balance-cards">
@@ -44,7 +69,10 @@
                 <div class="table-section">
                     <div class="table-header">
                         <h3>Highest Transactions</h3>
-                        <a href="history" class="view-all-link">View All</a>
+                        <div class="header-actions">
+                            <span class="date-range">@GetDateRangeDisplay()</span>
+                            <a href="history" class="view-all-link">View All</a>
+                        </div>
                     </div>
                     @if (recentTransactions.Any())
                     {
@@ -61,8 +89,8 @@
                                 @foreach (var transaction in recentTransactions)
                                 {
                                     <tr>
-                                        <td>@transaction.Type</td>
-                                        <td>$@transaction.Amount</td>
+                                        <td><span class="transaction-type @transaction.Type.ToLower()">@transaction.Type</span></td>
+                                        <td>$@transaction.Amount.ToString("N2")</td>
                                         <td>@transaction.Title</td>
                                         <td>@(transaction.Date?.ToShortDateString() ?? "N/A")</td>
                                     </tr>
@@ -72,14 +100,17 @@
                     }
                     else
                     {
-                        <p class="no-data">No recent transactions</p>
+                        <p class="no-data">No transactions found for the selected period</p>
                     }
                 </div>
 
                 <div class="table-section">
                     <div class="table-header">
                         <h3>Pending Debts</h3>
-                        <a href="pending-debts" class="view-all-link">View All</a>
+                        <div class="header-actions">
+                            <span class="date-range">@GetDateRangeDisplay()</span>
+                            <a href="pending-debts" class="view-all-link">View All</a>
+                        </div>
                     </div>
                     @if (pendingDebts.Any())
                     {
@@ -95,11 +126,17 @@
                             <tbody>
                                 @foreach (var debt in pendingDebts)
                                 {
-                                    <tr>
+                                    <tr class="@(IsDebtOverdue(debt) ? "overdue" : "")">
                                         <td>@debt.Title</td>
-                                        <td>$@debt.Amount</td>
+                                        <td>$@debt.Amount.ToString("N2")</td>
                                         <td>@debt.Source</td>
-                                        <td>@(debt.DueDate?.ToShortDateString() ?? "N/A")</td>
+                                        <td>
+                                            @(debt.DueDate?.ToShortDateString() ?? "N/A")
+                                            @if (IsDebtOverdue(debt))
+                                            {
+                                                <span class="overdue-badge">Overdue</span>
+                                            }
+                                        </td>
                                     </tr>
                                 }
                             </tbody>
@@ -107,7 +144,7 @@
                     }
                     else
                     {
-                        <p class="no-data">No pending debts</p>
+                        <p class="no-data">No pending debts found for the selected period</p>
                     }
                 </div>
             </div>
@@ -120,6 +157,70 @@
 </div>
 
 <style>
+    .date-filter-section {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .filter-group label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+    .filter-button,
+    .reset-button {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .filter-button {
+        background-color: #007bff;
+        color: white;
+    }
+
+        .filter-button:hover {
+            background-color: #0056b3;
+        }
+
+    .reset-button {
+        background-color: #6c757d;
+        color: white;
+    }
+
+        .reset-button:hover {
+            background-color: #5a6268;
+        }
+
+    .date-range {
+        font-size: 12px;
+        color: #666;
+        margin-right: 10px;
+    }
+
     .dashboard-container {
         max-width: 1200px;
         margin: 20px auto;
@@ -291,18 +392,32 @@
         .login-link:hover {
             background-color: #218838;
         }
+    /* Keep your existing styles unchanged */
 </style>
 
 @code {
     private DashboardSummary? dashboardSummary;
     private List<Transaction> recentTransactions = new();
     private List<Debt> pendingDebts = new();
+    private DateTime? startDate;
+    private DateTime? endDate;
+    private string selectedDateRange = "30";
 
     protected override async Task OnInitializedAsync()
     {
         if (AuthService.IsAuthenticated)
         {
+            await SetDefaultDateRange();
             await LoadDashboardDataAsync();
+        }
+    }
+
+    private async Task SetDefaultDateRange()
+    {
+        endDate = DateTime.Today;
+        if (int.TryParse(selectedDateRange, out int days))
+        {
+            startDate = endDate.Value.AddDays(-days);
         }
     }
 
@@ -310,18 +425,55 @@
     {
         try
         {
-            dashboardSummary = await BalanceService.GetDashboardSummaryAsync();
-            recentTransactions = await TransactionHistoryService.GetTopTransactionsByAmountAsync(5);
-            pendingDebts = await DebtHistoryService.GetTopPendingDebtsByAmountAsync(5);
+            dashboardSummary = await BalanceService.GetDashboardSummaryAsync(startDate, endDate);
+            recentTransactions = await TransactionHistoryService.GetTopTransactionsByAmountAsync(5, startDate, endDate);
+            pendingDebts = await DebtHistoryService.GetTopPendingDebtsByAmountAsync(5, startDate, endDate);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // Handle any errors
+            Console.WriteLine($"Error loading dashboard data: {ex.Message}");
         }
+    }
+
+    private async Task ApplyFilter()
+    {
+        if (selectedDateRange != "custom")
+        {
+            await SetDefaultDateRange();
+        }
+        else if (startDate > endDate)
+        {
+            var temp = startDate;
+            startDate = endDate;
+            endDate = temp;
+        }
+
+        await LoadDashboardDataAsync();
+    }
+
+    private async Task ResetFilter()
+    {
+        selectedDateRange = "30";
+        await SetDefaultDateRange();
+        await LoadDashboardDataAsync();
+    }
+
+    private string GetDateRangeDisplay()
+    {
+        if (startDate.HasValue && endDate.HasValue)
+        {
+            return $"{startDate.Value.ToShortDateString()} - {endDate.Value.ToShortDateString()}";
+        }
+        return "All Time";
     }
 
     private string GetBalanceClass(decimal amount)
     {
         return amount >= 0 ? "positive" : "negative";
+    }
+
+    private bool IsDebtOverdue(Debt debt)
+    {
+        return debt.DueDate.HasValue && debt.DueDate.Value < DateTime.Today;
     }
 }
