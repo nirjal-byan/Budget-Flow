@@ -1,46 +1,45 @@
 ﻿@page "/dashboard"
-@inherits AuthenticatedPageBase
 @inject BudgetFlow.Services.BalanceService BalanceService
 @inject BudgetFlow.Services.AuthenticationService AuthService
 
 <div class="dashboard-container">
     @if (!AuthService.IsAuthenticated)
     {
-            <div class="login-message">
-                <h2>Please Login First</h2>
-                <p>You need to be logged in to view your dashboard.</p>
-                <a href="login" class="login-link">Go to Login Page</a>
-            </div>
+        <div class="login-message">
+            <h2>Please Login First</h2>
+            <p>You need to be logged in to view your dashboard.</p>
+            <a href="login" class="login-link">Go to Login Page</a>
+        </div>
     }
     else
     {
-            <h3 class="welcome-title">Welcome to your Dashboard</h3>
+        <h3 class="welcome-title">Welcome to your Dashboard</h3>
 
         @if (dashboardSummary != null)
         {
-                    <div class="balance-cards">
-                        <div class="balance-card @GetBalanceClass(dashboardSummary.CurrentBalance)">
-                            <h4>Total Balance</h4>
-                            <p class="amount">$@dashboardSummary.CurrentBalance.ToString("N2")</p>
-                            <p class="description">Total of all transactions</p>
-                        </div>
+            <div class="balance-cards">
+                <div class="balance-card @GetBalanceClass(dashboardSummary.CurrentBalance)">
+                    <h4>Total Balance</h4>
+                    <p class="amount">$@dashboardSummary.CurrentBalance.ToString("N2")</p>
+                    <p class="description">Total of all transactions</p>
+                </div>
 
-                        <div class="balance-card debt">
-                            <h4>Pending Debts</h4>
-                            <p class="amount">$@dashboardSummary.TotalPendingDebts.ToString("N2")</p>
-                            <p class="description">Total pending debts</p>
-                        </div>
+                <div class="balance-card debt">
+                    <h4>Pending Debts</h4>
+                    <p class="amount">$@dashboardSummary.TotalPendingDebts.ToString("N2")</p>
+                    <p class="description">Total pending debts</p>
+                </div>
 
-                        <div class="balance-card @GetBalanceClass(dashboardSummary.AvailableBalance)">
-                            <h4>Available Balance</h4>
-                            <p class="amount">$@dashboardSummary.AvailableBalance.ToString("N2")</p>
-                            <p class="description">After deducting pending debts</p>
-                        </div>
-                    </div>
+                <div class="balance-card @GetBalanceClass(dashboardSummary.AvailableBalance)">
+                    <h4>Available Balance</h4>
+                    <p class="amount">$@dashboardSummary.AvailableBalance.ToString("N2")</p>
+                    <p class="description">After deducting pending debts</p>
+                </div>
+            </div>
         }
         else
         {
-                    <div class="loading">Loading balance information...</div>
+            <div class="loading">Loading balance information...</div>
         }
     }
 </div>
@@ -128,31 +127,33 @@
 
     .login-message {
         text-align: center;
-        padding: 40px;
+        padding: 40px 20px;
     }
 
         .login-message h2 {
-            color: #333;
             margin-bottom: 15px;
+            color: #333;
         }
 
         .login-message p {
+            margin: 20px 0;
             color: #666;
-            margin-bottom: 20px;
+            font-size: 16px;
         }
 
     .login-link {
         display: inline-block;
         padding: 10px 20px;
-        background-color: #007bff;
+        background-color: #333;
         color: white;
         text-decoration: none;
         border-radius: 5px;
+        font-size: 16px;
         transition: background-color 0.3s;
     }
 
         .login-link:hover {
-            background-color: #0056b3;
+            background-color: #555;
             text-decoration: none;
         }
 </style>
