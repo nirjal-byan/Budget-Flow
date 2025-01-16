@@ -54,5 +54,41 @@ namespace BudgetFlow.Services
 
             return transaction;
         }
+
+        public async Task DeleteTransactionAsync(int transactionId)
+        {
+            if (!_authService.IsAuthenticated)
+                throw new UnauthorizedAccessException("User must be logged in to delete transactions");
+
+            var transactions = await LoadTransactionsAsync();
+            var transactionToDelete = transactions.FirstOrDefault(t => t.Id == transactionId && t.UserId == _authService.CurrentUser!.Id);
+
+            if (transactionToDelete == null)
+                throw new InvalidOperationException("Transaction not found or does not belong to the user");
+
+            transactions.Remove(transactionToDelete);
+            await SaveTransactionsAsync(transactions);
+        }
+
+        public async Task UpdateTransactionAsync(Transaction updatedTransaction)
+        {
+            if (!_authService.IsAuthenticated)
+                throw new UnauthorizedAccessException("User must be logged in to update transactions");
+
+            var transactions = await LoadTransactionsAsync();
+            var transactionToUpdate = transactions.FirstOrDefault(t => t.Id == updatedTransaction.Id && t.UserId == _authService.CurrentUser!.Id);
+
+            if (transactionToUpdate == null)
+                throw new InvalidOperationException("Transaction not found or does not belong to the user");
+
+            transactionToUpdate.Title = updatedTransaction.Title;
+            transactionToUpdate.Amount = updatedTransaction.Amount;
+            transactionToUpdate.Type = updatedTransaction.Type;
+            transactionToUpdate.Tag = updatedTransaction.Tag;
+            transactionToUpdate.Date = updatedTransaction.Date;
+            transactionToUpdate.Notes = updatedTransaction.Notes;
+
+            await SaveTransactionsAsync(transactions);
+        }
     }
 }

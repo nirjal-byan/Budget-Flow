@@ -17,21 +17,30 @@
 
         <!-- Search, Filters, and Date Inputs -->
         <div class="search-and-filters">
-            <input type="text" @bind="searchTerm" @bind:after="UpdateFilteredTransactionsAsync" class="search-input" placeholder="Search in table..." />
-            <select @bind="selectedType" @bind:after="UpdateFilteredTransactionsAsync" class="filter-dropdown">
+            <input type="text"
+                   @oninput="OnSearchTermChanged"
+                   class="search-input"
+                   placeholder="Search in table..." />
+            <select @onchange="OnTypeChanged" class="filter-dropdown">
                 <option value="All">All Types</option>
                 <option value="Debit">Debit</option>
                 <option value="Credit">Credit</option>
             </select>
-            <select @bind="selectedTag" @bind:after="UpdateFilteredTransactionsAsync" class="filter-dropdown">
+            <select @onchange="OnTagChanged" class="filter-dropdown">
                 <option value="All">All Tags</option>
                 @foreach (var tag in tags)
                 {
                     <option value="@tag">@tag</option>
                 }
             </select>
-            <InputDate @bind-Value="startDate" @bind-Value:after="UpdateFilteredTransactionsAsync" class="compact-date-input" placeholder="Start Date" />
-            <InputDate @bind-Value="endDate" @bind-Value:after="UpdateFilteredTransactionsAsync" class="compact-date-input" placeholder="End Date" />
+            <InputDate @bind-Value="startDate"
+                       @bind-Value:after="UpdateFilteredTransactionsAsync"
+                       class="compact-date-input"
+                       placeholder="Start Date" />
+            <InputDate @bind-Value="endDate"
+                       @bind-Value:after="UpdateFilteredTransactionsAsync"
+                       class="compact-date-input"
+                       placeholder="End Date" />
         </div>
 
         <!-- Summary -->
@@ -51,6 +60,7 @@
                     <th>Tags</th>
                     <th>Date</th>
                     <th>Notes</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -64,6 +74,9 @@
                         <td>@transaction.Tag</td>
                         <td>@(transaction.Date.HasValue ? transaction.Date.Value.ToShortDateString() : "N/A")</td>
                         <td>@transaction.Notes</td>
+                        <td>
+                            <button @onclick="() => DeleteTransaction(transaction.Id)" class="delete-button">Delete</button>
+                        </td>
                     </tr>
                 }
             </tbody>
@@ -94,11 +107,11 @@
         padding: 40px 20px;
     }
 
-    .login-message p {
-        margin: 20px 0;
-        color: #666;
-        font-size: 16px;
-    }
+        .login-message p {
+            margin: 20px 0;
+            color: #666;
+            font-size: 16px;
+        }
 
     .login-link {
         display: inline-block;
@@ -111,9 +124,9 @@
         transition: background-color 0.3s;
     }
 
-    .login-link:hover {
-        background-color: #555;
-    }
+        .login-link:hover {
+            background-color: #555;
+        }
 
     .search-and-filters {
         display: flex;
@@ -152,20 +165,42 @@
         font-size: 14px;
     }
 
-    .transaction-table th, .transaction-table td {
-        border: 1px solid #ddd;
-        padding: 10px;
-        text-align: center;
-    }
+        .transaction-table th, .transaction-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
 
-    .transaction-table th {
-        background-color: #333;
+        .transaction-table th {
+            background-color: #333;
+            color: #fff;
+        }
+
+        .transaction-table tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+    .delete-button {
+        background-color: #333; /* Matches your existing dark theme colors */
         color: #fff;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 5px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
     }
 
-    .transaction-table tbody tr:nth-child(even) {
-        background-color: #f9f9f9;
-    }
+        .delete-button:hover {
+            background-color: #555; /* Slightly lighter for hover */
+            transform: scale(1.05); /* Add a slight zoom effect */
+        }
+
+        .delete-button:active {
+            background-color: #111; /* Darker for pressed state */
+            transform: scale(1); /* Reset zoom on click */
+        }
+
 </style>
 
 @code {
@@ -223,6 +258,37 @@
         catch (Exception)
         {
             filteredTransactions = new List<BudgetFlow.Models.Transaction>();
+        }
+    }
+
+    private async Task OnSearchTermChanged(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? string.Empty;
+        await UpdateFilteredTransactionsAsync();
+    }
+
+    private async Task OnTypeChanged(ChangeEventArgs e)
+    {
+        selectedType = e.Value?.ToString() ?? "All";
+        await UpdateFilteredTransactionsAsync();
+    }
+
+    private async Task OnTagChanged(ChangeEventArgs e)
+    {
+        selectedTag = e.Value?.ToString() ?? "All";
+        await UpdateFilteredTransactionsAsync();
+    }
+
+    private async Task DeleteTransaction(int id)
+    {
+        try
+        {
+            await HistoryService.DeleteTransactionAsync(id);
+            await UpdateFilteredTransactionsAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting transaction: {ex.Message}");
         }
     }
 }

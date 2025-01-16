@@ -18,8 +18,11 @@
     {
         <h2>Pending Debts</h2>
         <div class="search-and-filters">
-            <input type="text" @bind="searchTerm" @bind:event="oninput" class="search-input" placeholder="Search debts..." />
-            <select @bind="selectedTag" class="filter-dropdown">
+            <input type="text"
+                   @oninput="OnSearchTermChanged"
+                   class="search-input"
+                   placeholder="Search debts..." />
+            <select @onchange="OnTagChanged" class="filter-dropdown">
                 <option value="All">All Tags</option>
                 @foreach (var tag in Tags)
                 {
@@ -255,8 +258,6 @@
         margin-top: 20px;
         color: #6c757d;
     }
-
-    
 </style>
 
 @code {
@@ -281,16 +282,29 @@
     private async Task RefreshDataAsync()
     {
         Tags = await DebtHistoryService.GetDistinctTagsAsync();
-        await UpdateFilteredDebts();
+        await UpdateFilteredDebtsAsync();
         availableBalance = await BalanceService.GetCurrentBalanceAsync();
     }
 
-    private async Task UpdateFilteredDebts()
+    private async Task UpdateFilteredDebtsAsync()
     {
         if (AuthService.IsAuthenticated)
         {
             FilteredDebts = await DebtHistoryService.GetFilteredDebtsAsync(searchTerm, selectedTag);
+            StateHasChanged();
         }
+    }
+
+    private async Task OnSearchTermChanged(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? string.Empty;
+        await UpdateFilteredDebtsAsync();
+    }
+
+    private async Task OnTagChanged(ChangeEventArgs e)
+    {
+        selectedTag = e.Value?.ToString() ?? "All";
+        await UpdateFilteredDebtsAsync();
     }
 
     private async Task ClearDebtAsync(BudgetFlow.Models.Debt debt)

@@ -57,5 +57,10 @@ namespace BudgetFlow.Services
                 .Take(count)
                 .ToList();
         }
+
+        public async Task DeleteTransactionAsync(int id)
+        {
+            await _transactionService.DeleteTransactionAsync(id);
+        }
     }
 }
