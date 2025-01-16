@@ -1,4 +1,6 @@
 ﻿@using Microsoft.AspNetCore.Components.Routing
+@inject NavigationManager Navigation
+
 
 <Router AppAssembly="@typeof(MauiProgram).Assembly">
     <Found Context="routeData">
@@ -11,3 +13,11 @@
         </LayoutView>
     </NotFound>
 </Router>
+
+@code {
+    protected override void OnInitialized()
+    {
+        // Ensure that the user is navigated to the Login page on startup
+        Navigation.NavigateTo("/login");
+    }
+}
