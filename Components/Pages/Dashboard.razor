@@ -40,82 +40,76 @@
                 </div>
             </div>
 
-            <div class="table-section">
-                <div class="table-header">
-                    <h3>Highest Transactions</h3>
-                    <a href="history" class="view-all-link">View All</a>
-                </div>
-                @if (recentTransactions.Any())
-                {
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Type</th>
-                                <th>Amount</th>
-                                <th>Title</th>
-                                <th>Tags</th>
-                                <th>Date</th>
-                                <th>Notes</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var transaction in recentTransactions)
-                            {
+            <div class="tables-row">
+                <div class="table-section">
+                    <div class="table-header">
+                        <h3>Highest Transactions</h3>
+                        <a href="history" class="view-all-link">View All</a>
+                    </div>
+                    @if (recentTransactions.Any())
+                    {
+                        <table class="data-table">
+                            <thead>
                                 <tr>
-                                    <td>@transaction.Type</td>
-                                    <td>$@transaction.Amount</td>
-                                    <td>@transaction.Title</td>
-                                    <td>@transaction.Tag</td>
-                                    <td>@(transaction.Date?.ToShortDateString() ?? "N/A")</td>
-                                    <td>@transaction.Notes</td>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Title</th>
+                                    <th>Date</th>
                                 </tr>
-                            }
-                        </tbody>
-                    </table>
-                }
-                else
-                {
-                    <p class="no-data">No recent transactions</p>
-                }
-            </div>
+                            </thead>
+                            <tbody>
+                                @foreach (var transaction in recentTransactions)
+                                {
+                                    <tr>
+                                        <td>@transaction.Type</td>
+                                        <td>$@transaction.Amount</td>
+                                        <td>@transaction.Title</td>
+                                        <td>@(transaction.Date?.ToShortDateString() ?? "N/A")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <p class="no-data">No recent transactions</p>
+                    }
+                </div>
 
-            <div class="table-section">
-                <div class="table-header">
-                    <h3>Pending Debts</h3>
-                    <a href="pending-debts" class="view-all-link">View All</a>
-                </div>
-                @if (pendingDebts.Any())
-                {
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Title</th>
-                                <th>Tag</th>
-                                <th>Source</th>
-                                <th>Amount</th>
-                                <th>Due Date</th>
-                                <th>Notes</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var debt in pendingDebts)
-                            {
+                <div class="table-section">
+                    <div class="table-header">
+                        <h3>Pending Debts</h3>
+                        <a href="pending-debts" class="view-all-link">View All</a>
+                    </div>
+                    @if (pendingDebts.Any())
+                    {
+                        <table class="data-table">
+                            <thead>
                                 <tr>
-                                    <td>@debt.Title</td>
-                                    <td>@debt.Tag</td>
-                                    <td>@debt.Source</td>
-                                    <td>$@debt.Amount</td>
-                                    <td>@(debt.DueDate?.ToShortDateString() ?? "N/A")</td>
-                                    <td>@debt.Notes</td>
+                                    <th>Title</th>
+                                    <th>Amount</th>
+                                    <th>Source</th>
+                                    <th>Due Date</th>
                                 </tr>
-                            }
-                        </tbody>
-                    </table>
-                }
-                else
-                {
-                    <p class="no-data">No pending debts</p>
-                }
+                            </thead>
+                            <tbody>
+                                @foreach (var debt in pendingDebts)
+                                {
+                                    <tr>
+                                        <td>@debt.Title</td>
+                                        <td>$@debt.Amount</td>
+                                        <td>@debt.Source</td>
+                                        <td>@(debt.DueDate?.ToShortDateString() ?? "N/A")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <p class="no-data">No pending debts</p>
+                    }
+                </div>
             </div>
         }
         else
@@ -128,36 +122,29 @@
 <style>
     .dashboard-container {
         max-width: 1200px;
-        margin: 30px auto;
-        padding: 20px;
+        margin: 20px auto;
+        padding: 0 15px;
         font-family: Arial, sans-serif;
     }
 
     h2 {
         text-align: center;
         color: #333;
-        margin-bottom: 30px;
+        margin-bottom: 20px;
         font-size: 24px;
     }
 
-    h3 {
-        color: #444;
-        margin: 0;
-        font-size: 20px;
-    }
-
-    /* Balance Cards Styles */
     .balance-cards {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 20px;
-        margin-bottom: 30px;
+        gap: 15px;
+        margin-bottom: 20px;
     }
 
     .balance-card {
         background: white;
-        padding: 20px;
-        border-radius: 10px;
+        padding: 15px;
+        border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         text-align: center;
     }
@@ -165,18 +152,18 @@
         .balance-card h4 {
             margin: 0;
             color: #666;
-            font-size: 18px;
+            font-size: 16px;
         }
 
         .balance-card .amount {
-            font-size: 32px;
+            font-size: 24px;
             font-weight: bold;
-            margin: 15px 0;
+            margin: 10px 0;
         }
 
         .balance-card .description {
             color: #666;
-            font-size: 14px;
+            font-size: 12px;
             margin: 0;
         }
 
@@ -201,118 +188,108 @@
             color: rgba(255, 255, 255, 0.8);
         }
 
-    /* Table Section Styles */
+    .tables-row {
+        display: flex;
+        gap: 15px;
+    }
+
     .table-section {
+        flex: 1;
         background: white;
-        border-radius: 10px;
+        border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        padding: 25px;
-        margin-bottom: 30px;
+        padding: 15px;
     }
 
     .table-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 2px solid #eee;
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
     }
+
+        .table-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: #444;
+        }
 
     .view-all-link {
         background-color: #007bff;
         color: white;
-        padding: 8px 16px;
-        border-radius: 5px;
+        padding: 4px 10px;
+        border-radius: 4px;
         text-decoration: none;
-        font-size: 14px;
-        transition: background-color 0.2s;
+        font-size: 12px;
     }
 
         .view-all-link:hover {
             background-color: #0056b3;
-            text-decoration: none;
-            color: white;
         }
 
     .data-table {
         width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        background-color: white;
+        border-collapse: collapse;
+        font-size: 13px;
     }
 
         .data-table th {
             background-color: #f8f9fa;
             color: #495057;
             font-weight: 600;
-            padding: 12px 15px;
+            padding: 8px;
             text-align: left;
-            border-bottom: 2px solid #dee2e6;
+            border-bottom: 1px solid #dee2e6;
         }
 
         .data-table td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #e9ecef;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
             color: #495057;
         }
 
-        .data-table tbody tr:hover {
-            background-color: #f8f9fa;
+        .data-table tr:last-child td {
+            border-bottom: none;
         }
 
-        .data-table tbody tr:last-child td {
-            border-bottom: none;
+        .data-table tr:hover {
+            background-color: #f8f9fa;
         }
 
     .no-data {
         text-align: center;
-        padding: 30px;
+        padding: 20px;
         color: #6c757d;
-        background-color: #f8f9fa;
-        border-radius: 5px;
-        margin: 0;
     }
 
     .loading {
         text-align: center;
-        padding: 40px;
+        padding: 30px;
         color: #6c757d;
-        font-size: 18px;
     }
 
     .login-message {
         text-align: center;
-        padding: 40px;
-        background-color: white;
-        border-radius: 10px;
+        padding: 30px;
+        background: white;
+        border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
-        .login-message h2 {
-            margin-top: 0;
-        }
-
-        .login-message p {
-            color: #6c757d;
-            margin: 20px 0;
-        }
-
     .login-link {
         display: inline-block;
-        padding: 10px 20px;
+        padding: 8px 16px;
         background-color: #28a745;
         color: white;
         text-decoration: none;
-        border-radius: 5px;
-        font-size: 16px;
-        transition: background-color 0.2s;
+        border-radius: 4px;
+        font-size: 14px;
     }
 
         .login-link:hover {
             background-color: #218838;
-            text-decoration: none;
-            color: white;
         }
 </style>
 
