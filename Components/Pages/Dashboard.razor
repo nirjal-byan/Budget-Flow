@@ -67,7 +67,7 @@
             </div>
 
             <div class="line-graph-container">
-                <h3>Transactions Graph</h3>
+                <h3>Transaction Records</h3>
                 <MudChart ChartType="ChartType.Line"
                           ChartSeries="@chartSeries"
                           @bind-SelectedIndex="selectedIndex"
@@ -83,7 +83,7 @@
                         <h3>Transactions</h3>
                         <div class="header-actions">
                             <button class="sort-button @(isAscending ? "" : "active")" @onclick="() => ToggleSort()">
-                                @(isAscending ? "Sort Highest" : "Sort Lowest")
+                                @(isAscending ? "Sort to Highest" : "Sort to Lowest")
                                 <span class="sort-icon">@(isAscending ? "↑" : "↓")</span>
                             </button>
                             <span class="date-range">@GetDateRangeDisplay()</span>
